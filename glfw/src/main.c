@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 GLuint VAOs[1];
-GLuint Buffers[1];
+GLuint VBOs[1];
 const GLuint NumVertices = 6;
 GLuint fbo;
 GLuint rbo;
@@ -16,6 +16,15 @@ unsigned int windowHeight = 720;
 
 
 void init() {
+    //Set up FBO and RBO
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, renderWidth, renderHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
+
+
     static const GLfloat vertices[6][3] = {
         {-0.90, -0.90, 0.0},
         {0.85, -0.90, 0.0},
@@ -25,16 +34,8 @@ void init() {
         {-0.85, 0.90, 0.0}
     };
 
-    glCreateBuffers(1, Buffers);
-    glNamedBufferStorage(Buffers[0], sizeof(vertices), vertices, 0);
-
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, renderWidth, renderHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
-
+    
+    //Load and compile shaders
     unsigned int vertexShader = load_shader("glfw/shaders/def.vert", VERTEX);
     unsigned int fragmentShader = load_shader("glfw/shaders/def.frag", FRAGMENT);
 
@@ -57,9 +58,15 @@ void init() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+
+    //Set up VAO and VBO
+    glCreateBuffers(1, VBOs);
+    glNamedBufferStorage(VBOs[0], sizeof(vertices), vertices, 0);
+
     glGenVertexArrays(1, VAOs);
     glBindVertexArray(VAOs[0]);
-    glBindBuffer(GL_ARRAY_BUFFER, Buffers[0]);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
 

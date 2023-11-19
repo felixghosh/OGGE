@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <stdio.h>
+#include "gl_utils.h"
 
 //Globals
 int screenWidth = 680;
@@ -8,6 +9,8 @@ int screenHeight = 480;
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
 bool quit = false;
+GLuint VAO;
+GLuint VBO;
 
 void getOpenGLVersionInfo(){
     printf("Vendor: %s\n", glGetString(GL_VENDOR));
@@ -52,6 +55,55 @@ void init() {
     getOpenGLVersionInfo();
 }
 
+void vertexSpecification() {
+    GLfloat vertexPositions[9] = {
+        -0.90, -0.90, 0.0,
+        0.85, -0.90, 0.0,
+        -0.90, 0.85, 0.0
+    };
+    
+    //Create VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    //Create VBO
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof vertexPositions, vertexPositions, GL_STATIC_DRAW);
+    
+    //Specify VAO attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
+
+    glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+}
+
+void createGraphicsPipeline(){
+    //Load and compile shaders
+    GLuint vertexShader = load_and_compile_shader("sdl/shaders/def.vert", VERTEX);
+    GLuint fragmentShader = load_and_compile_shader("sdl/shaders/def.frag", FRAGMENT);
+
+    unsigned int shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    int success;
+    char infoLog[512];
+
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if(!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        printf("Error! Program linking failed: %s\n", infoLog);
+    }
+
+    glUseProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+}
+
 void handleInput() {
     SDL_Event e;
     while(SDL_PollEvent(&e) != 0) {
@@ -61,16 +113,27 @@ void handleInput() {
 }
 
 void preDraw() {
-
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glViewport(0, 0, screenWidth, screenHeight);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void draw() {
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 void mainLoop() {
     while(!quit){
         handleInput();
+
+        vertexSpecification();
+
+        createGraphicsPipeline();
 
         preDraw();
 

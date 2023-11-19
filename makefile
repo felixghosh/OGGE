@@ -1,7 +1,7 @@
 GLFW_FILES = glfw/src/main.c glfw/src/gl_utils.c
 GLFW_LIBS = -lglfw -lGL -lGLEW
 
-SDL_FILES = sdl/src/main.cpp
+SDL_FILES = sdl/src/main.cpp sdl/src/gl_utils.c
 SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl 
 
 #GLFW
