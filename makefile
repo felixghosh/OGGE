@@ -4,7 +4,7 @@ GLFW_LIBS = -lglfw -lGL -lGLEW
 SDL_FILES = sdl/src/main.cpp sdl/src/gl_utils.c
 SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl 
 
-BOGP_FILES = bogp/src/main.cpp
+BOGP_FILES = bogp/src/main.cpp bogp/src/gl_utils.cpp bogp/src/object.cpp
 BOGP_LIBS = -lGL -lglfw -lGLEW
 
 #Beginning OpenGL Game Programming

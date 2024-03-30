@@ -1,24 +1,25 @@
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-#include <GL/glew.h>
+#include "gl_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "object.h"
 
-GLuint VAOs[1];
-GLuint VBOs[1];
-const GLuint NumVertices = 6;
-GLuint fbo;
-GLuint rbo;
+struct object_t quad;
+GLuint vboID;
+GLuint vaoID;
+GLuint eboID;
+unsigned int shaderProgram;
 
 unsigned int renderWidth = 320;
 unsigned int renderHeight = 240;
 unsigned int windowWidth = 1280;
 unsigned int windowHeight = 720;
 
-
-
 void init() {
+    //--------Initial options and querying---------
     glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CCW);
     const GLubyte *vendor, *renderer, *version, *extensions;
     vendor = glGetString(GL_VENDOR);
     renderer = glGetString(GL_RENDERER);
@@ -31,10 +32,43 @@ void init() {
     //     extensions = glGetStringi(GL_EXTENSIONS, i++);
     //     printf("Extension: %s\n", extensions);
     // } while (extensions != NULL);
+
+
+    //------------Load & compile shaders---------
+    object_attach_shaders(&quad,"bogp/shaders/def.vert", "bogp/shaders/def.frag");
+
+
+    //------------Set up primitives-------------
+    GLfloat vertices[] = {
+     0.5f,  0.5f, 0.0f,  // top right
+     0.5f, -0.5f, 0.0f,  // bottom right
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    -0.5f,  0.5f, 0.0f   // top left 
+    };
+    GLuint indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
+    };
+    quad.vertices = vertices;
+    quad.vert_indices = indices;
+    quad.num_vertices = 6; 
+
+    object_generate_buffers(&quad);
+    object_bind_buffers(&quad);
+    // glBindVertexArray(quad.vao);
+    
+    // glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof vertices, vertices, GL_STATIC_DRAW);
+
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof indices, indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
 }
 
 void render() {
-    
+    object_render(&quad);
 }
 
 int main(int argc, char *argv[]){
@@ -46,12 +80,12 @@ int main(int argc, char *argv[]){
         printf("GLFW initialized!\n");
     }
 
-    // glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback(error_callback);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "My Title", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "OGGE:BOGP - v0.0.1", NULL, NULL);
     if (!window) {
         printf("Could not create GLFW window!\n");
         exit(1);
@@ -69,7 +103,7 @@ int main(int argc, char *argv[]){
         printf("GLEW initialized!\n");
     }
     printf("Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
-    // glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, key_callback);
     
 
     init();
