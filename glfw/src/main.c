@@ -72,7 +72,7 @@ void init() {
 
 }
 
-void display() {
+void render() {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, renderWidth, renderHeight);
 
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]){
     init();
     
     while (!glfwWindowShouldClose(window)) {
-        display();
+        render();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

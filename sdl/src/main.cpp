@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <stdio.h>
 #include "gl_utils.h"
+#include <time.h>
 
 //Globals
 int screenWidth = 680;
@@ -9,8 +10,18 @@ int screenHeight = 480;
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
 bool quit = false;
-GLuint VAO;
-GLuint VBO;
+GLuint VAO, VAO2;
+GLuint VBO, VBO2;
+double elapsed_time;
+struct timespec t0, t1;
+
+void update_time()
+{
+  clock_gettime(CLOCK_REALTIME, &t1);
+  elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
+  printf("fps: %5u\n", (int)(1 / elapsed_time));
+  clock_gettime(CLOCK_REALTIME, &t0);
+}
 
 void getOpenGLVersionInfo(){
     printf("Vendor: %s\n", glGetString(GL_VENDOR));
@@ -19,47 +30,16 @@ void getOpenGLVersionInfo(){
     printf("Shading Language: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-void init() {
-    if(SDL_Init(SDL_INIT_VIDEO) < 0){
-        fprintf(stderr, "Could not initialize SDL2!\n");
-        exit(1);
-    }
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-
-    window =  SDL_CreateWindow("OpenGL Window", 0, 0, screenWidth, screenHeight, SDL_WINDOW_OPENGL);
-    if(!window){
-        fprintf(stderr, "Could not create SDL window!\n");
-        exit(1);
-    }
-
-    opengl_context = SDL_GL_CreateContext(window);
-    if(!opengl_context){
-        fprintf(stderr, "Could not create OpenGL context!\n");
-        exit(1);
-    }
-
-    GLenum glew_init = glewInit();
-    if (glew_init != GLEW_OK) {
-        fprintf(stderr, "Error: %s\n", glewGetErrorString(glew_init));
-        exit(1);
-    }
-
-    glEnable(GL_DEPTH_TEST);
-
-    printf("SDL and OpenGL initialized!\n");
-    getOpenGLVersionInfo();
-}
-
 void vertexSpecification() {
     GLfloat vertexPositions[9] = {
         -0.90, -0.90, 0.0,
         0.85, -0.90, 0.0,
         -0.90, 0.85, 0.0
+    };
+    GLfloat vertexPositions2[9] = {
+        0.90, -0.85, 0.0,
+        0.90, 0.90, 0.0,
+        -0.85, 0.90, 0.0
     };
     
     //Create VAO
@@ -72,6 +52,22 @@ void vertexSpecification() {
     glBufferData(GL_ARRAY_BUFFER, sizeof vertexPositions, vertexPositions, GL_STATIC_DRAW);
     
     //Specify VAO attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
+
+    glBindVertexArray(0);
+    glDisableVertexAttribArray(0);
+
+    //Create VAO2
+    glGenVertexArrays(1, &VAO2);
+    glBindVertexArray(VAO2);
+
+    //Create VBO2
+    glGenBuffers(1, &VBO2);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof vertexPositions2, vertexPositions2, GL_STATIC_DRAW);
+    
+    //Specify VAO2 attribute
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 
@@ -104,6 +100,46 @@ void createGraphicsPipeline(){
     glDeleteShader(fragmentShader);
 }
 
+void init() {
+    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+        fprintf(stderr, "Could not initialize SDL2!\n");
+        exit(1);
+    }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+    window =  SDL_CreateWindow("OpenGL Window", 0, 0, screenWidth, screenHeight, SDL_WINDOW_OPENGL);
+    if(!window){
+        fprintf(stderr, "Could not create SDL window!\n");
+        exit(1);
+    }
+
+    opengl_context = SDL_GL_CreateContext(window);
+    if(!opengl_context){
+        fprintf(stderr, "Could not create OpenGL context!\n");
+        exit(1);
+    }
+
+    GLenum glew_init = glewInit();
+    if (glew_init != GLEW_OK) {
+        fprintf(stderr, "Error: %s\n", glewGetErrorString(glew_init));
+        exit(1);
+    }
+
+    glEnable(GL_DEPTH_TEST);
+
+    printf("SDL and OpenGL initialized!\n");
+    getOpenGLVersionInfo();
+
+    vertexSpecification();
+
+    createGraphicsPipeline();
+}
+
 void handleInput() {
     SDL_Event e;
     while(SDL_PollEvent(&e) != 0) {
@@ -113,8 +149,8 @@ void handleInput() {
 }
 
 void preDraw() {
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+//     glDisable(GL_DEPTH_TEST);
+//     glDisable(GL_CULL_FACE);
     glViewport(0, 0, screenWidth, screenHeight);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -125,16 +161,19 @@ void draw() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glBindVertexArray(VAO2);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 void mainLoop() {
     while(!quit){
         handleInput();
 
-        vertexSpecification();
-
-        createGraphicsPipeline();
-
+        update_time();
+        
         preDraw();
 
         draw();
