@@ -16,7 +16,6 @@ void object_attach_shaders(object_t *obj, const char *vertex_shader_path, const 
         glGetProgramInfoLog(obj->shader_program, 512, NULL, infoLog);
         printf("Error! Program linking failed: %s\n", infoLog);
     }
-    printf("SUCC!\n");
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);

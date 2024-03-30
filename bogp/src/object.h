@@ -5,9 +5,7 @@
 
 struct object_t {
     GLfloat *vertices;
-    GLfloat *colors;
-    GLuint *vert_indices;
-    GLuint *color_indices;
+    GLuint *indices;
     GLuint vbo;
     GLuint vao;
     GLuint ebo;
