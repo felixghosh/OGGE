@@ -12,7 +12,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-unsigned int load_shader(char* filepath, enum shadertype type) {
+GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
     FILE* fp = fopen(filepath, "r");
     if(fp == NULL){
         printf("Error! Shader source file can't be opened!\n");
@@ -23,7 +23,7 @@ unsigned int load_shader(char* filepath, enum shadertype type) {
     int fileSize = ftell(fp);
     rewind(fp);
 
-    char* shaderSource = malloc(sizeof(char)*fileSize+1);
+    char* shaderSource = (char*)malloc(sizeof(char)*fileSize+1);
     memset(shaderSource, 0, fileSize+1);
     int n = fread(shaderSource, sizeof(char), fileSize, fp);
     fclose(fp);
@@ -48,4 +48,42 @@ unsigned int load_shader(char* filepath, enum shadertype type) {
     free(shaderSource);
 
     return shader;
+}
+
+void print_vendor_info(int print_extensions) {
+    const GLubyte *vendor, *renderer, *version, *extensions;
+    vendor = glGetString(GL_VENDOR);
+    renderer = glGetString(GL_RENDERER);
+    version = glGetString(GL_VERSION);
+    
+    printf("Vendor: %s\nRenderer: %s\nVersion: %s\n", vendor, renderer, version);
+    // Query for OpenGL Extensions
+    if(print_extensions) {
+        int i = 0;
+        do {
+            extensions = glGetStringi(GL_EXTENSIONS, i++);
+            printf("Extension: %s\n", extensions);
+        } while (extensions != NULL);
+    }
+}
+
+void print_debug_messages() {
+    int numMsgs = 100;
+    GLint maxMsgLen = 0;
+    glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH, &maxMsgLen);
+    GLchar msgData[numMsgs * maxMsgLen];
+    GLenum sources[numMsgs], types[numMsgs], severities[numMsgs];
+    GLuint ids[numMsgs];
+    GLsizei lengths[numMsgs];
+    GLuint numFound = glGetDebugMessageLog(numMsgs, numMsgs * maxMsgLen, sources, types, ids, severities, lengths, msgData);
+
+    printf("numFound: %u\n", numFound);
+    int pos = 0;
+    for(int i = 0; i < numFound; i++){
+        for(int j = pos; j < pos + lengths[i]; j++){
+            putchar(msgData[j]);
+        }
+        putchar('\n');
+        pos += lengths[i];
+    }
 }

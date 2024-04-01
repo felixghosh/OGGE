@@ -13,8 +13,11 @@ void error_callback(int error, const char* description);
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-
 //OpenGL util functions
-unsigned int load_shader(char* filepath, enum shadertype type);
+GLuint load_and_compile_shader(const char* filepath, enum shadertype type);
+
+void print_vendor_info(int print_extensions);
+
+void print_debug_messages();
 
 #endif

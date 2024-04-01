@@ -3,7 +3,7 @@
 
 #include "gl_utils.h"
 
-struct object_t {
+typedef struct object_t {
     GLfloat *vertices;
     GLuint *indices;
     GLuint vbo;
@@ -11,7 +11,7 @@ struct object_t {
     GLuint ebo;
     GLuint shader_program;
     unsigned int num_vertices;
-};
+} object_t;
 
 void object_attach_shaders(object_t *obj, const char *vertex_shader_path, const char *fragment_shader_path);
 
