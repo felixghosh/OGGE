@@ -95,6 +95,7 @@ void render() {
     time_sum += elapsed_time;
     clock_gettime(CLOCK_REALTIME, &t0);
     float uf = sin(glfwGetTime()) / 2.0f + 0.5f;
+    printf("fps: %5u\n", (int)(1 / elapsed_time));
 
 
     glUseProgram(quad.shader_program);
