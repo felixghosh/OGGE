@@ -1,8 +1,8 @@
 GLFW_FILES = glfw/src/main.c glfw/src/gl_utils.c glfw/src/object.c
 GLFW_LIBS = -lglfw -lGL -lGLEW -lm
 
-SDL_FILES = sdl/src/main.c sdl/src/gl_utils.c
-SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl 
+SDL_FILES = sdl/src/main.c sdl/src/gl_utils.c sdl/src/object.c
+SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl -lm
 
 #SDL
 sdl: $(SDL_FILES)

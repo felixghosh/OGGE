@@ -22,9 +22,12 @@ void object_attach_shaders(object_t *obj, const char *vertex_shader_path, const 
 }
 
 void object_render(object_t *obj) {
-    glUseProgram(obj->shader_program);
     glBindVertexArray(obj->vao);
     glDrawElements(GL_TRIANGLES, obj->num_vertices, GL_UNSIGNED_INT, 0);
+}
+
+void object_use(object_t *obj) {
+    glUseProgram(obj->shader_program);
 }
 
 void object_generate_buffers(object_t *obj) {

@@ -2,30 +2,33 @@
 #include <GL/glew.h>
 #include <stdio.h>
 #include "gl_utils.h"
+#include "object.h"
 #include <time.h>
 #include <stdbool.h>
+#include <math.h>
 
 //Globals
-int screenWidth = 680;
-int screenHeight = 480;
-unsigned int renderWidth = 320;
-unsigned int renderHeight = 240;
-unsigned int windowWidth = 1280;
-unsigned int windowHeight = 720;
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
 bool quit = false;
 GLuint fbo;
 GLuint rbo;
-GLuint VAO, VAO2;
-GLuint VBO, VBO2;
+GLuint uniform_loc;
+object_t quad;
 double elapsed_time;
+double game_time;
 struct timespec t0, t1;
+
+unsigned int renderWidth = 320;
+unsigned int renderHeight = 240;
+unsigned int windowWidth = 1280;
+unsigned int windowHeight = 720;
 
 void update_time()
 {
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
+  game_time += elapsed_time;
   printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
@@ -38,48 +41,46 @@ void getOpenGLVersionInfo(){
 }
 
 void vertexSpecification() {
-    GLfloat vertexPositions[9] = {
-        -0.90, -0.90, 0.0,
-        0.85, -0.90, 0.0,
-        -0.90, 0.85, 0.0
+    //------------Set up primitives-------------
+    GLfloat vertices[] = {
+     0.5f,  0.5f, 0.0f,  // top right
+     0.5f, -0.5f, 0.0f,  // bottom right
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    -0.5f,  0.5f, 0.0f,   // top left
+    
+    //colors
+     0.0f,  0.0f, 1.0f,  // top right
+     0.0f,  1.0f, 0.0f,  // bottom right
+     1.0f,  0.0f, 0.0f,  // bottom left
+     1.0f,  1.0f, 0.0f   // top left  
     };
-    GLfloat vertexPositions2[9] = {
-        0.90, -0.85, 0.0,
-        0.90, 0.90, 0.0,
-        -0.85, 0.90, 0.0
+    GLuint indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
     };
+    quad.vertices = vertices;
+    quad.indices = indices;
+    quad.num_vertices = 6;
     
-    //Create VAO
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
+    glGenVertexArrays(1, &(quad.vao));
+    glGenBuffers(1, &(quad.vbo));
+    glGenBuffers(1, &(quad.ebo));
 
-    //Create VBO
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof vertexPositions, vertexPositions, GL_STATIC_DRAW);
-    
-    //Specify VAO attribute
+    glBindVertexArray(quad.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ebo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof vertices, vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof indices, indices, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
 
-    glBindVertexArray(0);
-    glDisableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(12*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 
-    //Create VAO2
-    glGenVertexArrays(1, &VAO2);
-    glBindVertexArray(VAO2);
-
-    //Create VBO2
-    glGenBuffers(1, &VBO2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof vertexPositions2, vertexPositions2, GL_STATIC_DRAW);
-    
-    //Specify VAO2 attribute
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, (void*)0);
-
-    glBindVertexArray(0);
-    glDisableVertexAttribArray(0);
+    uniform_loc = glGetUniformLocation(quad.shader_program, "b_comp");
+    clock_gettime(CLOCK_REALTIME, &t0);
 }
 
 void createGraphicsPipeline(){
@@ -91,28 +92,8 @@ void createGraphicsPipeline(){
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
 
-    //Load and compile shaders
-    GLuint vertexShader = load_and_compile_shader("sdl/shaders/def.vert", VERTEX);
-    GLuint fragmentShader = load_and_compile_shader("sdl/shaders/def.frag", FRAGMENT);
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    int success;
-    char infoLog[512];
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        printf("Error! Program linking failed: %s\n", infoLog);
-    }
-
-    glUseProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    //------------Load & compile shaders, attach and link to program---------
+    object_attach_shaders(&quad, "sdl/shaders/def.vert", "sdl/shaders/def.frag");
 }
 
 void init() {
@@ -146,13 +127,17 @@ void init() {
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEBUG_OUTPUT);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CCW);
 
     printf("SDL and OpenGL initialized!\n");
     getOpenGLVersionInfo();
 
+    createGraphicsPipeline();
     vertexSpecification();
 
-    createGraphicsPipeline();
 }
 
 void handleInput() {
@@ -164,24 +149,18 @@ void handleInput() {
 }
 
 void preDraw() {
-//     glDisable(GL_DEPTH_TEST);
-//     glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, renderWidth, renderHeight);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glUseProgram(quad.shader_program);
 }
 
 void draw() {
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    glBindVertexArray(VAO2);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    object_use(&quad);
+    float uf = sin(game_time) / 2.0f + 0.5f;
+    glUniform1f(uniform_loc, uf);
+    object_render(&quad);
 }
 
 void postDraw() {
@@ -205,7 +184,7 @@ void mainLoop() {
         SDL_GL_SwapWindow(window);
 
     }
-    printf("Program exit! Terminating application");
+    printf("Program exit! Terminating application\n");
 }
 
 void terminate() {

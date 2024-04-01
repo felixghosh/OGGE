@@ -19,7 +19,7 @@ GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
     int n = fread(shaderSource, sizeof(char), fileSize, fp);
     fclose(fp);
 
-    GLuint shader;
+    unsigned int shader;
     if(type == VERTEX)
         shader = glCreateShader(GL_VERTEX_SHADER);
     else if(type == FRAGMENT)
@@ -39,4 +39,42 @@ GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
     free(shaderSource);
 
     return shader;
+}
+
+void print_vendor_info(int print_extensions) {
+    const GLubyte *vendor, *renderer, *version, *extensions;
+    vendor = glGetString(GL_VENDOR);
+    renderer = glGetString(GL_RENDERER);
+    version = glGetString(GL_VERSION);
+    
+    printf("Vendor: %s\nRenderer: %s\nVersion: %s\n", vendor, renderer, version);
+    // Query for OpenGL Extensions
+    if(print_extensions) {
+        int i = 0;
+        do {
+            extensions = glGetStringi(GL_EXTENSIONS, i++);
+            printf("Extension: %s\n", extensions);
+        } while (extensions != NULL);
+    }
+}
+
+void print_debug_messages() {
+    int numMsgs = 100;
+    GLint maxMsgLen = 0;
+    glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH, &maxMsgLen);
+    GLchar msgData[numMsgs * maxMsgLen];
+    GLenum sources[numMsgs], types[numMsgs], severities[numMsgs];
+    GLuint ids[numMsgs];
+    GLsizei lengths[numMsgs];
+    GLuint numFound = glGetDebugMessageLog(numMsgs, numMsgs * maxMsgLen, sources, types, ids, severities, lengths, msgData);
+
+    printf("numFound: %u\n", numFound);
+    int pos = 0;
+    for(int i = 0; i < numFound; i++){
+        for(int j = pos; j < pos + lengths[i]; j++){
+            putchar(msgData[j]);
+        }
+        putchar('\n');
+        pos += lengths[i];
+    }
 }
