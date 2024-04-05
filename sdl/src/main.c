@@ -1,11 +1,13 @@
 #include <SDL2/SDL.h>
-#include <GL/glew.h>
 #include <stdio.h>
 #include "gl_utils.h"
 #include "object.h"
 #include <time.h>
 #include <stdbool.h>
 #include <math.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 //Globals
 SDL_Window *window = NULL;
@@ -52,7 +54,13 @@ void vertexSpecification() {
      0.0f,  0.0f, 1.0f,  // top right
      0.0f,  1.0f, 0.0f,  // bottom right
      1.0f,  0.0f, 0.0f,  // bottom left
-     1.0f,  1.0f, 0.0f   // top left  
+     1.0f,  1.0f, 0.0f,   // top left  
+
+    //tex-coords
+    1.0f, 1.0f,
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    0.0f, 1.0f
     };
     GLuint indices[] = {  // note that we start from 0!
         0, 1, 3,   // first triangle
@@ -61,14 +69,19 @@ void vertexSpecification() {
     quad.vertices = vertices;
     quad.indices = indices;
     quad.num_vertices = 6;
-    
-    glGenVertexArrays(1, &(quad.vao));
-    glGenBuffers(1, &(quad.vbo));
-    glGenBuffers(1, &(quad.ebo));
 
-    glBindVertexArray(quad.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, quad.vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad.ebo);
+    //textures
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load("sdl/textures/container.jpg", &width, &height, &nrChannels, 0);
+    object_gen_texture(&quad);
+    object_bind_texture(&quad);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    
+    
+    object_gen_buffers(&quad);
+    object_bind_buffers(&quad);
 
     glBufferData(GL_ARRAY_BUFFER, sizeof vertices, vertices, GL_DYNAMIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof indices, indices, GL_DYNAMIC_DRAW);
@@ -79,7 +92,10 @@ void vertexSpecification() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(12*sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
-    uniform_loc = glGetUniformLocation(quad.shader_program, "b_comp");
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(24*sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+
+    uniform_loc = glGetUniformLocation(quad.shader_program, "time");
     clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -132,6 +148,11 @@ void init() {
     // glCullFace(GL_BACK);
     // glFrontFace(GL_CCW);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     printf("SDL and OpenGL initialized!\n");
     getOpenGLVersionInfo();
 
@@ -158,8 +179,7 @@ void preDraw() {
 
 void draw() {
     object_use(&quad);
-    float uf = sin(game_time) / 2.0f + 0.5f;
-    glUniform1f(uniform_loc, uf);
+    glUniform1f(uniform_loc, game_time);
     object_render(&quad);
 }
 

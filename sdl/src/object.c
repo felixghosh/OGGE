@@ -30,7 +30,7 @@ void object_use(object_t *obj) {
     glUseProgram(obj->shader_program);
 }
 
-void object_generate_buffers(object_t *obj) {
+void object_gen_buffers(object_t *obj) {
     glGenVertexArrays(1, &(obj->vao));
     glGenBuffers(1, &(obj->vbo));
     glGenBuffers(1, &(obj->ebo));
@@ -40,4 +40,12 @@ void object_bind_buffers(object_t *obj) {
     glBindVertexArray(obj->vao);
     glBindBuffer(GL_ARRAY_BUFFER, obj->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
+}
+
+void object_gen_texture(object_t *obj) {
+    glGenTextures(1, &(obj->texture));
+}
+
+void object_bind_texture(object_t *obj) {
+    glBindTexture(GL_TEXTURE_2D, obj->texture);
 }

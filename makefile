@@ -3,13 +3,14 @@ GLFW_LIBS = -lglfw -lGL -lGLEW -lm
 
 SDL_FILES = sdl/src/main.c sdl/src/gl_utils.c sdl/src/object.c
 SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl -lm
+SDL_FLAGS = -g -I sdl/include
 
 #SDL
-sdl: $(SDL_FILES)
-	gcc -g $(SDL_FILES) $(SDL_LIBS)
+sdl: a.out
+	gcc $(SDL_FLAGS) $(SDL_FILES) $(SDL_LIBS)
 	./a.out
 
 #GLFW
-glfw: $(GLFW_FILES)
+glfw: a.out
 	gcc -g $(GLFW_FILES) $(GLFW_LIBS)
 	./a.out
