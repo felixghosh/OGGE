@@ -1,5 +1,6 @@
 #include "object.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void object_attach_shaders(object_t *obj, const char *vertex_shader_path, const char *fragment_shader_path){
     GLuint vertex_shader = load_and_compile_shader(vertex_shader_path, VERTEX);
@@ -42,10 +43,16 @@ void object_bind_buffers(object_t *obj) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
 }
 
-void object_gen_texture(object_t *obj) {
-    glGenTextures(1, &(obj->texture));
+void object_gen_textures(object_t *obj, unsigned int num_textures) {
+    obj->textures = malloc(num_textures * sizeof(GLuint));
+    glGenTextures(num_textures, obj->textures);
 }
 
-void object_bind_texture(object_t *obj) {
-    glBindTexture(GL_TEXTURE_2D, obj->texture);
+void object_bind_texture(object_t *obj, unsigned int index) {
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(GL_TEXTURE_2D, obj->textures[index]);
+}
+
+void object_free(object_t *obj) {
+    free(obj->textures);
 }

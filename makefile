@@ -6,7 +6,7 @@ SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl -lm
 SDL_FLAGS = -g -I sdl/include
 
 #SDL
-sdl: a.out
+default:
 	gcc $(SDL_FLAGS) $(SDL_FILES) $(SDL_LIBS)
 	./a.out
 

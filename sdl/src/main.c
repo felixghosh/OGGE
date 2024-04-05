@@ -72,9 +72,10 @@ void vertexSpecification() {
 
     //textures
     int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
     unsigned char *data = stbi_load("sdl/textures/container.jpg", &width, &height, &nrChannels, 0);
-    object_gen_texture(&quad);
-    object_bind_texture(&quad);
+    object_gen_textures(&quad, 1);
+    object_bind_texture(&quad, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
