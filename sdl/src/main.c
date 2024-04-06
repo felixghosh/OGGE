@@ -1,11 +1,13 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "gl_utils.h"
 #include "object.h"
 #include <time.h>
 #include <stdbool.h>
 #include <math.h>
 
+#include "vec.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -16,7 +18,7 @@ bool quit = false;
 GLuint fbo;
 GLuint rbo;
 GLuint uniform_loc;
-object_t quad;
+object quad;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;

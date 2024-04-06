@@ -10,7 +10,7 @@ GLuint fbo;
 GLuint rbo;
 GLuint uniform_loc;
 struct timespec t0, t1;
-object_t quad;
+object quad;
 
 unsigned int renderWidth = 320;
 unsigned int renderHeight = 240;
