@@ -3,15 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-void error_callback(int error, const char* description) {
-    fprintf(stderr, "Error: %s\n", description);
-}
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
-
 GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
     FILE* fp = fopen(filepath, "r");
     if(fp == NULL){
@@ -25,7 +16,7 @@ GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
 
     char* shaderSource = (char*)malloc(sizeof(char)*fileSize+1);
     memset(shaderSource, 0, fileSize+1);
-    int n = fread(shaderSource, sizeof(char), fileSize, fp);
+    fread(shaderSource, sizeof(char), fileSize, fp);
     fclose(fp);
 
     unsigned int shader;
@@ -79,7 +70,7 @@ void print_debug_messages() {
 
     printf("numFound: %u\n", numFound);
     int pos = 0;
-    for(int i = 0; i < numFound; i++){
+    for(GLuint i = 0; i < numFound; i++){
         for(int j = pos; j < pos + lengths[i]; j++){
             putchar(msgData[j]);
         }

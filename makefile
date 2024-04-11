@@ -1,15 +1,17 @@
-GLFW_FILES = glfw/src/main.c glfw/src/gl_utils.c glfw/src/object.c
-GLFW_LIBS = -lglfw -lGL -lGLEW -lm
+LIBS = -lSDL2 -lGL -lGLEW -ldl -lm -lgcl
+FLAGS = -g -I include -L lib -Wall -Wextra -pedantic
+OBJECTS = gl_utils object vec
+CC = gcc
 
-SDL_FILES = sdl/src/main.c sdl/src/gl_utils.c sdl/src/object.c sdl/src/vec.c
-SDL_LIBS = -lSDL2 -lGL -lGLEW -ldl -lm
-SDL_FLAGS = -g -I sdl/include
-
-#SDL
-default:
-	gcc $(SDL_FLAGS) $(SDL_FILES) $(SDL_LIBS)
-
-#GLFW
-glfw: a.out
-	gcc -g $(GLFW_FILES) $(GLFW_LIBS)
+main: $(OBJECTS)
+	$(CC) $(FLAGS) src/main.c obj/* $(LIBS)
 	./a.out
+
+gl_utils:
+	$(CC) -c $(FLAGS) src/gl_utils.c -o obj/gl_utils.o $(LIBS)
+
+object:
+	$(CC) -c $(FLAGS) src/object.c -o obj/object.o $(LIBS)
+
+vec:
+	$(CC) -c $(FLAGS) src/vec.c -o obj/vec.o $(LIBS)

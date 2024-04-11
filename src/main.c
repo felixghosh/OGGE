@@ -6,6 +6,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <math.h>
+#include "gcl_mem.h"
 
 #include "vec.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -33,7 +34,7 @@ void update_time()
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-  printf("fps: %5u\n", (int)(1 / elapsed_time));
+//   printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -75,7 +76,7 @@ void vertexSpecification() {
     //textures
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load("sdl/textures/container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
     object_gen_textures(&quad, 1);
     object_bind_texture(&quad, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -112,7 +113,7 @@ void createGraphicsPipeline(){
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
 
     //------------Load & compile shaders, attach and link to program---------
-    object_attach_shaders(&quad, "sdl/shaders/def.vert", "sdl/shaders/def.frag");
+    object_attach_shaders(&quad, "shaders/def.vert", "shaders/def.frag");
 }
 
 void init() {
@@ -222,6 +223,8 @@ int main() {
     mainLoop();
 
     terminate();
+
+    check_allocations();
 
     return 0;
 }

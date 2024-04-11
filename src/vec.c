@@ -4,7 +4,7 @@
 //--------VEC2--------
 vec2 vec2_add(vec2 a, vec2 b){
     return (vec2){a.x+b.x, a.y+b.y};
-};
+}
 
 vec2 vec2_sub(vec2 a,  vec2 b){
     return (vec2){a.x-b.x, a.y-b.y};
@@ -37,14 +37,14 @@ float vec2_dot(vec2 a, vec2 b){
 }
 
 float vec2_length(vec2 a){
-    sqrt((a.x*a.x) + (a.y*a.y));
+    return sqrt((a.x*a.x) + (a.y*a.y));
 }
 
 
 //--------VEC3--------
 vec3 vec3_add(vec3 a, vec3 b){
     return (vec3){a.x+b.x, a.y+b.y, a.z+b.z};
-};
+}
 
 vec3 vec3_sub(vec3 a,  vec3 b){
     return (vec3){a.x-b.x, a.y-b.y, a.z-b.z};
@@ -84,14 +84,14 @@ float vec3_dot(vec3 a, vec3 b){
 }
 
 float vec3_length(vec3 a){
-    sqrt((a.x*a.x) + (a.y*a.y) + (a.z*a.z));
+    return sqrt((a.x*a.x) + (a.y*a.y) + (a.z*a.z));
 }
 
 
 //--------VEC4--------
 vec4 vec4_add(vec4 a, vec4 b){
     return (vec4){a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w};
-};
+}
 
 vec4 vec4_sub(vec4 a,  vec4 b){
     return (vec4){a.x-b.x, a.y-b.y, a.z-b.z, a.w-b.w};
@@ -120,9 +120,9 @@ vec4 vec4_normalize(vec4 a){
 }
 
 float vec4_dot(vec4 a, vec4 b){
-    return (a.x*b.x) + (a.y*b.y) + (a.z*b.z), (a.w*b.w);
+    return (a.x*b.x) + (a.y*b.y) + (a.z*b.z) + (a.w*b.w);
 }
 
 float vec4_length(vec4 a){
-    sqrt((a.x*a.x) + (a.y*a.y) + (a.z*a.z) + (a.w*a.w));
+    return sqrt((a.x*a.x) + (a.y*a.y) + (a.z*a.z) + (a.w*a.w));
 }
