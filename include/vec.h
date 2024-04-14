@@ -1,6 +1,7 @@
 #ifndef VEC_H
 #define VEC_H
 
+
 //--------VEC2--------
 typedef float[2] vec2;
 
@@ -29,6 +30,7 @@ vec3  vec3_normalize (vec3 a);
 float vec3_dot       (vec3 a,  vec3 b);
 float vec3_length    (vec3 a);
 
+
 //--------VEC4--------
 typedef float[4] vec4;
 
@@ -41,5 +43,6 @@ vec4  vec4_div_scalar(vec4 a, float b);
 vec4  vec4_normalize (vec4 a);
 float vec4_dot       (vec4 a,  vec4 b);
 float vec4_length    (vec4 a);
+
 
 #endif
