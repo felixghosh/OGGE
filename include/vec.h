@@ -2,10 +2,7 @@
 #define VEC_H
 
 //--------VEC2--------
-typedef struct vec2 {
-    float x;
-    float y;
-} vec2;
+typedef float[2] vec2;
 
 vec2  vec2_add       (vec2 a,  vec2 b);
 vec2  vec2_sub       (vec2 a,  vec2 b);
@@ -19,11 +16,7 @@ float vec2_length    (vec2 a);
 
 
 //--------VEC3--------
-typedef struct vec3 {
-    float x;
-    float y;
-    float z;
-} vec3;
+typedef float[3] vec3;
 
 vec3  vec3_add       (vec3 a,  vec3 b);
 vec3  vec3_sub       (vec3 a,  vec3 b);
@@ -37,12 +30,7 @@ float vec3_dot       (vec3 a,  vec3 b);
 float vec3_length    (vec3 a);
 
 //--------VEC4--------
-typedef struct vec4 {
-    float x;
-    float y;
-    float z;
-    float w;
-} vec4;
+typedef float[4] vec4;
 
 vec4  vec4_add       (vec4 a,  vec4 b);
 vec4  vec4_sub       (vec4 a,  vec4 b);
