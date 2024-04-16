@@ -9,6 +9,8 @@
 #include "gcl_mem.h"
 
 #include "vec.h"
+#include "mat.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -52,12 +54,12 @@ void vertexSpecification() {
      0.5f, -0.5f, 0.0f,  // bottom right
     -0.5f, -0.5f, 0.0f,  // bottom left
     -0.5f,  0.5f, 0.0f,   // top left
-    
+
     //colors
      0.0f,  0.0f, 1.0f,  // top right
      0.0f,  1.0f, 0.0f,  // bottom right
      1.0f,  0.0f, 0.0f,  // bottom left
-     1.0f,  1.0f, 0.0f,   // top left  
+     1.0f,  1.0f, 0.0f,   // top left
 
     //tex-coords
     1.0f, 1.0f,
@@ -82,8 +84,8 @@ void vertexSpecification() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
-    
-    
+
+
     object_gen_buffers(&quad);
     object_bind_buffers(&quad);
 
@@ -198,7 +200,7 @@ void mainLoop() {
         handleInput();
 
         update_time();
-        
+
         preDraw();
 
         draw();
