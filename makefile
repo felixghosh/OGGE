@@ -1,6 +1,6 @@
 LIBS = -lSDL2 -lGL -lGLEW -ldl -lm -lgcl
 FLAGS = -g -I include -L lib -Wall -Wextra -pedantic
-OBJECTS = obj/gl_utils.o obj/object.o obj/vec.o obj/mat.o
+OBJECTS = obj/gl_utils.o obj/object.o obj/vec.o obj/mat.o obj/transform.o
 CC = gcc
 
 main: $(OBJECTS)
@@ -23,3 +23,6 @@ obj/vec.o:
 
 obj/mat.o:
 	$(CC) -c $(FLAGS) src/mat.c -o obj/mat.o $(LIBS)
+
+obj/transform.o:
+	$(CC) -c $(FLAGS) src/transform.c -o obj/transform.o $(LIBS)

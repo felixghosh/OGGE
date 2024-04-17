@@ -21,7 +21,7 @@ bool quit = false;
 GLuint fbo;
 GLuint rbo;
 GLuint uniform_loc;
-object quad;
+object quad, cube;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
@@ -103,6 +103,40 @@ void vertexSpecification() {
 
     uniform_loc = glGetUniformLocation(quad.shader_program, "time");
     clock_gettime(CLOCK_REALTIME, &t0);
+
+    //-------------------cube---------------------
+    vec4 cube_vertices[16] = {
+        {{-1.0, -1.0, -1.0, 1.0}}, {{ 1.0, -1.0, -1.0, 1.0}},
+        {{ 1.0,  1.0, -1.0, 1.0}}, {{-1.0,  1.0, -1.0, 1.0}},
+        {{-1.0, -1.0,  1.0, 1.0}}, {{-1.0, -1.0,  1.0, 1.0}},
+        {{ 1.0,  1.0,  1.0, 1.0}}, {{-1.0,  1.0,  1.0, 1.0}},
+
+        {{0.0, 0.0, 0.0, 1.0}},{{1.0, 0.0, 0.0, 1.0}},
+        {{1.0, 1.0, 0.0, 1.0}},{{0.0, 1.0, 0.0, 1.0}},
+        {{0.0, 0.0, 1.0, 1.0}},{{1.0, 0.0, 1.0, 1.0}},
+        {{0.0, 1.0, 1.0, 1.0}},{{1.0, 1.0, 1.0, 1.0}}
+    };
+    GLuint cube_indices[] = {
+        0, 3, 2, 0, 2, 1,
+        2, 3, 7, 2, 7, 6,
+        3, 0, 4, 3, 4, 7,
+        1, 2, 6, 1, 6, 5,
+        4, 5, 6, 4, 6, 7,
+        5, 4, 0, 5, 0, 1
+    };
+
+    cube.num_vertices = 36;
+    object_gen_buffers(&cube);
+    object_bind_buffers(&cube);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof cube_vertices, cube_vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof cube_indices, cube_indices, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(32*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
 }
 
 void createGraphicsPipeline(){
@@ -115,7 +149,8 @@ void createGraphicsPipeline(){
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
 
     //------------Load & compile shaders, attach and link to program---------
-    object_attach_shaders(&quad, "shaders/def.vert", "shaders/def.frag");
+    object_attach_shaders(&quad, "shaders/quad.vert", "shaders/quad.frag");
+    object_attach_shaders(&cube, "shaders/cube.vert", "shaders/cube.frag");
 }
 
 void init() {
@@ -184,6 +219,8 @@ void preDraw() {
 }
 
 void draw() {
+    object_use(&cube);
+    object_render(&cube);
     object_use(&quad);
     glUniform1f(uniform_loc, game_time);
     object_render(&quad);
