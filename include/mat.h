@@ -107,6 +107,7 @@ mat4 mat4_sub_scalar(mat4 a, float b);
 mat4 mat4_mul_scalar(mat4 a, float b);
 mat4 mat4_div_scalar(mat4 a, float b);
 mat4 mat4_transpose (mat4 a);
+mat4 mat4_identity  (void);
 vec4 mat4_mul_vec   (mat4 a,  vec4 b);
 void mat4_print     (mat4 a);
 

@@ -10,6 +10,7 @@
 
 #include "vec.h"
 #include "mat.h"
+#include "transform.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -20,16 +21,20 @@ SDL_GLContext opengl_context = NULL;
 bool quit = false;
 GLuint fbo;
 GLuint rbo;
-GLuint uniform_loc;
+GLuint rbod;
+GLuint uniform_loc_time, uniform_loc_ctm;
 object quad, cube;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
+mat4 ctm;
+float theta[3] = {0.0f, 0.0f, 0.0f};
+enum {X, Y, Z} axis;
 
-unsigned int renderWidth = 320;
-unsigned int renderHeight = 240;
-unsigned int windowWidth = 1280;
-unsigned int windowHeight = 720;
+unsigned int renderWidth = 480;
+unsigned int renderHeight = 270;
+unsigned int windowWidth = 1600;
+unsigned int windowHeight = 900;
 
 void update_time()
 {
@@ -101,14 +106,14 @@ void vertexSpecification() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(24*sizeof(GLfloat)));
     glEnableVertexAttribArray(2);
 
-    uniform_loc = glGetUniformLocation(quad.shader_program, "time");
-    clock_gettime(CLOCK_REALTIME, &t0);
+    uniform_loc_time = glGetUniformLocation(quad.shader_program, "time");
+
 
     //-------------------cube---------------------
     vec4 cube_vertices[16] = {
         {{-1.0, -1.0, -1.0, 1.0}}, {{ 1.0, -1.0, -1.0, 1.0}},
         {{ 1.0,  1.0, -1.0, 1.0}}, {{-1.0,  1.0, -1.0, 1.0}},
-        {{-1.0, -1.0,  1.0, 1.0}}, {{-1.0, -1.0,  1.0, 1.0}},
+        {{-1.0, -1.0,  1.0, 1.0}}, {{1.0, -1.0,  1.0, 1.0}},
         {{ 1.0,  1.0,  1.0, 1.0}}, {{-1.0,  1.0,  1.0, 1.0}},
 
         {{0.0, 0.0, 0.0, 1.0}},{{1.0, 0.0, 0.0, 1.0}},
@@ -137,17 +142,25 @@ void vertexSpecification() {
 
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(32*sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
+
+    uniform_loc_ctm = glGetUniformLocation(cube.shader_program, "ctm");
+    clock_gettime(CLOCK_REALTIME, &t0);
 }
 
 void createGraphicsPipeline(){
      //Set up FBO and RBO
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
 
+    glGenRenderbuffers(1, &rbod);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbod);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
     //------------Load & compile shaders, attach and link to program---------
     object_attach_shaders(&quad, "shaders/quad.vert", "shaders/quad.frag");
     object_attach_shaders(&cube, "shaders/cube.vert", "shaders/cube.frag");
@@ -185,9 +198,9 @@ void init() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEBUG_OUTPUT);
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
-    // glFrontFace(GL_CCW);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -199,7 +212,6 @@ void init() {
 
     createGraphicsPipeline();
     vertexSpecification();
-
 }
 
 void handleInput() {
@@ -215,15 +227,43 @@ void preDraw() {
     glViewport(0, 0, renderWidth, renderHeight);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    glUseProgram(quad.shader_program);
+    theta[Z] += 51.0*elapsed_time;
+    theta[Z] = theta[Z] > 360.0f ? theta[Z] - 360.0f : theta[Z];
+    theta[Y] += 7.0*elapsed_time;
+    theta[Y] = theta[Y] > 360.0f ? theta[Y] - 360.0f : theta[Y];
+    theta[X] += 23.0*elapsed_time;
+    theta[X] = theta[X] > 360.0f ? theta[X] - 360.0f : theta[X];
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void draw() {
+    ctm = mat4_identity();
+    mat4 rz = transform_rotate_z(theta[Z]);
+    mat4 ry = transform_rotate_y(theta[Y]);
+    mat4 rx = transform_rotate_x(theta[X]);
+    mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
+    ctm = mat4_mul(ctm, rz);
+    ctm = mat4_mul(ctm, ry);
+    ctm = mat4_mul(ctm, rx);
+
+    float n = 0.1f;
+    float f = 1000.0f;
+    float t = tan(90.0)*n;
+    float r = t*(16.0/9.0);
+    mat4 p = {{
+        {n/r, 0.0f, 0.0f, 0.0f},
+        {0.0f, n/t, 0.0f, 0.0f},
+        {0.0f, 0.0f, -((f+n)/(f-n)), ((-2*f*n)/(f-n))},
+        {0.0f, 0.0f, -1.0f, 0.0f}
+    }};
+    // ctm = mat4_mul(ctm, p);
+    // ctm = mat4_mul(ctm, tx);
     object_use(&cube);
+    glUniformMatrix4fv(uniform_loc_ctm, 1, GL_TRUE, (const float *)ctm.m);
     object_render(&cube);
-    object_use(&quad);
-    glUniform1f(uniform_loc, game_time);
-    object_render(&quad);
+    // object_use(&quad);
+    // glUniform1f(uniform_loc_time, game_time);
+    // object_render(&quad);
 }
 
 void postDraw() {
