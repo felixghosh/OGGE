@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "transform.h"
+
 void object_attach_shaders(object *obj, const char *vertex_shader_path, const char *fragment_shader_path){
     GLuint vertex_shader = load_and_compile_shader(vertex_shader_path, VERTEX);
     GLuint fragment_shader = load_and_compile_shader(fragment_shader_path, FRAGMENT);
@@ -55,4 +57,14 @@ void object_bind_texture(object *obj, unsigned int index) {
 
 void object_free(object *obj) {
     free(obj->textures);
+}
+
+mat4 object_model_mat(object *obj){
+    mat4 model = mat4_identity();
+    model = mat4_mul(model, transform_translate(obj->pos.v[0], obj->pos.v[1], obj->pos.v[2]));
+    model = mat4_mul(model, transform_scale(obj->scale, obj->scale, obj->scale));
+    model = mat4_mul(model, transform_rotate_x(obj->orientation.v[0]));
+    model = mat4_mul(model, transform_rotate_y(obj->orientation.v[1]));
+    model = mat4_mul(model, transform_rotate_z(obj->orientation.v[2]));
+    return model;
 }

@@ -38,6 +38,8 @@ unsigned int renderHeight = 270;
 unsigned int windowWidth = 1600;
 unsigned int windowHeight = 900;
 
+float far = 3.0f;
+
 void update_time()
 {
   clock_gettime(CLOCK_REALTIME, &t1);
@@ -133,6 +135,8 @@ void vertexSpecification() {
     };
 
     cube.num_vertices = 36;
+    cube.pos = (vec3){{0.0f, 0.0f, -2.0f}};
+    cube.scale = 1.0f;
     object_gen_buffers(&cube);
     object_bind_buffers(&cube);
 
@@ -194,6 +198,9 @@ void init() {
         exit(1);
     }
 
+    SDL_SetWindowMouseGrab(window, SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+
     GLenum glew_init = glewInit();
     if (glew_init != GLEW_OK) {
         fprintf(stderr, "Error: %s\n", glewGetErrorString(glew_init));
@@ -202,7 +209,7 @@ void init() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEBUG_OUTPUT);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
@@ -240,38 +247,40 @@ void handleInput() {
             // }
         }
         // Mouse movement
-        else if (evt.type == SDL_MOUSEMOTION) {
-            // if (evt.motion.x != WIDTH * resScale / 2 && evt.motion.y != HEIGHT * resScale / 2)
-            // {
-                // int dx = evt.motion.xrel;
-                // int dy = evt.motion.yrel;
-                // pitchPlayer((double)dy / 300);
-                // yawPlayer((double)dx / 300);
-            // }
+        else if(evt.type == SDL_MOUSEMOTION) {
+                int dx = evt.motion.xrel;
+                int dy = evt.motion.yrel;
+                    // game_camera.theta_y += -dx * 3000 * elapsed_time;
+                camera_pitch(&game_camera, -dy * 2000 * elapsed_time);
+                camera_yaw(&game_camera, -dx * 2000 * elapsed_time);
         }
         // Click
-        else if (evt.type == SDL_MOUSEBUTTONDOWN) {
-            int x = evt.motion.x;
-            int y = evt.motion.y;
-            if (evt.button.button == SDL_BUTTON_LEFT)
-            {
+        else if(evt.type == SDL_MOUSEBUTTONDOWN) {
+            // int x = evt.motion.x;
+            // int y = evt.motion.y;
+            // if (evt.button.button == SDL_BUTTON_LEFT)
+            // {
 
-            }
+            // }
         }
     }
 
      // Multiple keypresses
     if (keystates[SDL_SCANCODE_W]){
-       game_camera.z += 1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*-1.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*-1.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_S]){
-       game_camera.z -= 1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*1.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*1.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_A]){
-       game_camera.x -= 1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_D]){
-       game_camera.x += 1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_R]){
        game_camera.y += 1.0f * elapsed_time;
@@ -279,9 +288,21 @@ void handleInput() {
     if (keystates[SDL_SCANCODE_F]){
        game_camera.y -= 1.0f * elapsed_time;
     }
+    if (keystates[SDL_SCANCODE_Q]){
+        camera_yaw(&game_camera, 40.0f * elapsed_time);
+    }
+    if (keystates[SDL_SCANCODE_E]){
+       camera_yaw(&game_camera, -40.0f * elapsed_time);
+    }
+    if (keystates[SDL_SCANCODE_T]){
+       camera_pitch(&game_camera, 70.0f * elapsed_time);
+    }
+    if (keystates[SDL_SCANCODE_G]){
+       camera_pitch(&game_camera, -70.0f * elapsed_time);
+    }
 
-    printf("x:%2.2f y:%2.2f z:%2.2f yaw:%2.2f pitch:%2.2f\n",
-    game_camera.x, game_camera.y, game_camera.z, game_camera.theta_x ,game_camera.theta_y);
+    // printf("x:%2.2f y:%2.2f z:%2.2f yaw:%2.2f pitch:%2.2f\n",
+    // game_camera.x, game_camera.y, game_camera.z, game_camera.theta_y ,game_camera.theta_x);
 }
 
 void preDraw() {
@@ -304,36 +325,26 @@ void preDraw() {
 void draw() {
     mat4 model, view, projection;
 
-    model = mat4_identity();
     mat4 rz = transform_rotate_z(theta[Z]);
     mat4 ry = transform_rotate_y(theta[Y]);
     mat4 rx = transform_rotate_x(theta[X]);
-    // mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
-    // tx = mat4_mul(tx, transform_translate(0.0f, 0.0f, -2.0));
-    mat4 tx = transform_translate(0.0f, 0.0f, -2.0);
-    model = mat4_mul(model, tx);
-    model = mat4_mul(model, rz);
-    model = mat4_mul(model, ry);
+
+    model = object_model_mat(&cube);
     model = mat4_mul(model, rx);
+    model = mat4_mul(model, ry);
+    model = mat4_mul(model, rz);
 
-
-    view = mat4_identity();
-    view = mat4_mul(view, transform_translate(game_camera.x, game_camera.y, game_camera.z));
+    view = camera_view_mat(&game_camera, cube);
 
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
-    projection = camera_perspective(90.0, 16.0f/9.0f, 0.5, 3.0f);
-
-
+    projection = camera_perspective(2.2f, 16.0f/9.0f, 0.01, 1000.0);
 
     object_use(&cube);
     glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
     glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
     glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
     object_render(&cube);
-    // object_use(&quad);
-    // glUniform1f(uniform_loc_time, game_time);
-    // object_render(&quad);
 }
 
 void postDraw() {
