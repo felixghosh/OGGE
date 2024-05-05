@@ -23,12 +23,11 @@ bool quit = false;
 GLuint fbo;
 GLuint rbo;
 GLuint rbod;
-GLuint uniform_loc_time, uniform_loc_ctm;
+GLuint uniform_loc_time, uniform_loc_model, uniform_loc_view, uniform_loc_projection;
 object quad, cube;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
-mat4 ctm;
 float theta[3] = {0.0f, 0.0f, 0.0f};
 enum {X, Y, Z} axis;
 
@@ -42,7 +41,7 @@ void update_time()
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-//   printf("fps: %5u\n", (int)(1 / elapsed_time));
+  printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -144,7 +143,9 @@ void vertexSpecification() {
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(32*sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
-    uniform_loc_ctm = glGetUniformLocation(cube.shader_program, "ctm");
+    uniform_loc_model = glGetUniformLocation(cube.shader_program, "model_mat");
+    uniform_loc_view = glGetUniformLocation(cube.shader_program, "view_mat");
+    uniform_loc_projection = glGetUniformLocation(cube.shader_program, "projection_mat");
     clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -163,8 +164,8 @@ void createGraphicsPipeline(){
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
     //------------Load & compile shaders, attach and link to program---------
-    object_attach_shaders(&quad, "shaders/quad.vert", "shaders/quad.frag");
-    object_attach_shaders(&cube, "shaders/cube.vert", "shaders/cube.frag");
+    object_attach_shaders(&quad, "shaders/quad_vert.glsl", "shaders/quad_frag.glsl");
+    object_attach_shaders(&cube, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
 }
 
 void init() {
@@ -238,31 +239,40 @@ void preDraw() {
 }
 
 void draw() {
-    ctm = mat4_identity();
+    mat4 model, view, projection;
+
+    model = mat4_identity();
     mat4 rz = transform_rotate_z(theta[Z]);
     mat4 ry = transform_rotate_y(theta[Y]);
     mat4 rx = transform_rotate_x(theta[X]);
     mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
-    mat4 ortho = camera_ortho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
-    ctm = mat4_mul(ctm, rz);
-    ctm = mat4_mul(ctm, ry);
-    ctm = mat4_mul(ctm, rx);
-    ctm = mat4_mul(ctm, ortho);
+    model = mat4_mul(model, tx);
+    model = mat4_mul(model, rz);
+    model = mat4_mul(model, ry);
+    model = mat4_mul(model, rx);
 
-    float n = 0.1f;
-    float f = 1000.0f;
-    float t = tan(90.0)*n;
-    float r = t*(16.0/9.0);
-    mat4 p = {{
-        {n/r, 0.0f, 0.0f, 0.0f},
-        {0.0f, n/t, 0.0f, 0.0f},
-        {0.0f, 0.0f, -((f+n)/(f-n)), ((-2*f*n)/(f-n))},
-        {0.0f, 0.0f, -1.0f, 0.0f}
-    }};
+
+    view = mat4_identity();
+
+    projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
+
+    // float n = 0.1f;
+    // float f = 1000.0f;
+    // float t = tan(90.0)*n;
+    // float r = t*(16.0/9.0);
+    // mat4 p = {{
+    //     {n/r, 0.0f, 0.0f, 0.0f},
+    //     {0.0f, n/t, 0.0f, 0.0f},
+    //     {0.0f, 0.0f, -((f+n)/(f-n)), ((-2*f*n)/(f-n))},
+    //     {0.0f, 0.0f, -1.0f, 0.0f}
+    // }};
     // ctm = mat4_mul(ctm, p);
     // ctm = mat4_mul(ctm, tx);
+
     object_use(&cube);
-    glUniformMatrix4fv(uniform_loc_ctm, 1, GL_TRUE, (const float *)ctm.m);
+    glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
     object_render(&cube);
     // object_use(&quad);
     // glUniform1f(uniform_loc_time, game_time);
