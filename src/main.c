@@ -11,6 +11,7 @@
 #include "vec.h"
 #include "mat.h"
 #include "transform.h"
+#include "camera.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -242,9 +243,11 @@ void draw() {
     mat4 ry = transform_rotate_y(theta[Y]);
     mat4 rx = transform_rotate_x(theta[X]);
     mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
+    mat4 ortho = camera_ortho(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
     ctm = mat4_mul(ctm, rz);
     ctm = mat4_mul(ctm, ry);
     ctm = mat4_mul(ctm, rx);
+    ctm = mat4_mul(ctm, ortho);
 
     float n = 0.1f;
     float f = 1000.0f;
