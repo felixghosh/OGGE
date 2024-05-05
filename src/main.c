@@ -41,7 +41,7 @@ void update_time()
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-  printf("fps: %5u\n", (int)(1 / elapsed_time));
+//   printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -246,6 +246,7 @@ void draw() {
     mat4 ry = transform_rotate_y(theta[Y]);
     mat4 rx = transform_rotate_x(theta[X]);
     mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
+    tx = mat4_mul(tx, transform_translate(0.0f, 0.0f, -2.0));
     model = mat4_mul(model, tx);
     model = mat4_mul(model, rz);
     model = mat4_mul(model, ry);
@@ -254,20 +255,11 @@ void draw() {
 
     view = mat4_identity();
 
-    projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
+    // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
+    // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
+    projection = camera_perspective(90.0, 16.0f/9.0f, 0.5, 3.0f);
 
-    // float n = 0.1f;
-    // float f = 1000.0f;
-    // float t = tan(90.0)*n;
-    // float r = t*(16.0/9.0);
-    // mat4 p = {{
-    //     {n/r, 0.0f, 0.0f, 0.0f},
-    //     {0.0f, n/t, 0.0f, 0.0f},
-    //     {0.0f, 0.0f, -((f+n)/(f-n)), ((-2*f*n)/(f-n))},
-    //     {0.0f, 0.0f, -1.0f, 0.0f}
-    // }};
-    // ctm = mat4_mul(ctm, p);
-    // ctm = mat4_mul(ctm, tx);
+
 
     object_use(&cube);
     glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
