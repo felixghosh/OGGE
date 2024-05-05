@@ -30,6 +30,8 @@ double game_time;
 struct timespec t0, t1;
 float theta[3] = {0.0f, 0.0f, 0.0f};
 enum {X, Y, Z} axis;
+camera game_camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+bool wireframe = false;
 
 unsigned int renderWidth = 480;
 unsigned int renderHeight = 270;
@@ -200,7 +202,7 @@ void init() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
@@ -217,11 +219,69 @@ void init() {
 }
 
 void handleInput() {
-    SDL_Event e;
-    while(SDL_PollEvent(&e) != 0) {
-        if(e.type == SDL_QUIT)
-            quit = true;
+    const Uint8 *keystates = SDL_GetKeyboardState(NULL);
+    SDL_Event evt;
+    while(SDL_PollEvent(&evt) != 0) {
+        // Individual keypresses
+        if (evt.type == SDL_KEYDOWN) {
+            int keypressed = evt.key.keysym.sym;
+            if (keypressed == SDLK_ESCAPE)
+            {
+                quit = true;
+            }
+            else if (keypressed == SDLK_l)
+            { // l
+                wireframe = !wireframe;
+            }
+            // else if (keypressed == SDLK_i)
+            // { // i
+            //     //Toggle debug state
+            //     debug = !debug;
+            // }
+        }
+        // Mouse movement
+        else if (evt.type == SDL_MOUSEMOTION) {
+            // if (evt.motion.x != WIDTH * resScale / 2 && evt.motion.y != HEIGHT * resScale / 2)
+            // {
+                // int dx = evt.motion.xrel;
+                // int dy = evt.motion.yrel;
+                // pitchPlayer((double)dy / 300);
+                // yawPlayer((double)dx / 300);
+            // }
+        }
+        // Click
+        else if (evt.type == SDL_MOUSEBUTTONDOWN) {
+            int x = evt.motion.x;
+            int y = evt.motion.y;
+            if (evt.button.button == SDL_BUTTON_LEFT)
+            {
+
+            }
+        }
     }
+
+     // Multiple keypresses
+    if (keystates[SDL_SCANCODE_W]){
+       game_camera.z += 1.0f * elapsed_time;
+    }
+    if (keystates[SDL_SCANCODE_S]){
+       game_camera.z -= 1.0f * elapsed_time;
+    }
+    if (keystates[SDL_SCANCODE_A]){
+       game_camera.x -= 1.0f * elapsed_time;
+    }
+    if (keystates[SDL_SCANCODE_D]){
+       game_camera.x += 1.0f * elapsed_time;
+    }
+    if (keystates[SDL_SCANCODE_R]){
+       game_camera.y += 1.0f * elapsed_time;
+    }
+    if (keystates[SDL_SCANCODE_F]){
+       game_camera.y -= 1.0f * elapsed_time;
+    }
+
+    printf("x:%2.2f y:%2.2f z:%2.2f yaw:%2.2f pitch:%2.2f\n",
+    game_camera.x, game_camera.y, game_camera.z, game_camera.theta_x ,game_camera.theta_y);
 }
 
 void preDraw() {
@@ -235,7 +295,10 @@ void preDraw() {
     theta[Y] = theta[Y] > 360.0f ? theta[Y] - 360.0f : theta[Y];
     theta[X] += 23.0*elapsed_time;
     theta[X] = theta[X] > 360.0f ? theta[X] - 360.0f : theta[X];
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    if(wireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 void draw() {
@@ -245,8 +308,9 @@ void draw() {
     mat4 rz = transform_rotate_z(theta[Z]);
     mat4 ry = transform_rotate_y(theta[Y]);
     mat4 rx = transform_rotate_x(theta[X]);
-    mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
-    tx = mat4_mul(tx, transform_translate(0.0f, 0.0f, -2.0));
+    // mat4 tx = transform_translate(sin(game_time), 0.0f, 0.0f);
+    // tx = mat4_mul(tx, transform_translate(0.0f, 0.0f, -2.0));
+    mat4 tx = transform_translate(0.0f, 0.0f, -2.0);
     model = mat4_mul(model, tx);
     model = mat4_mul(model, rz);
     model = mat4_mul(model, ry);
@@ -254,6 +318,7 @@ void draw() {
 
 
     view = mat4_identity();
+    view = mat4_mul(view, transform_translate(game_camera.x, game_camera.y, game_camera.z));
 
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
