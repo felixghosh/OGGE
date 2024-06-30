@@ -12,20 +12,20 @@ clear:
 
 clean: clear main
 
-obj/gl_utils.o: src/gl_utils.c
+obj/gl_utils.o: src/gl_utils.c include/gl_utils.h
 	$(CC) -c $(FLAGS) src/gl_utils.c -o obj/gl_utils.o $(LIBS)
 
-obj/object.o: src/object.c
+obj/object.o: src/object.c include/object.h
 	$(CC) -c $(FLAGS) src/object.c -o obj/object.o $(LIBS)
 
-obj/vec.o: src/vec.c
+obj/vec.o: src/vec.c include/vec.h
 	$(CC) -c $(FLAGS) src/vec.c -o obj/vec.o $(LIBS)
 
-obj/mat.o: src/mat.c
+obj/mat.o: src/mat.c include/mat.h
 	$(CC) -c $(FLAGS) src/mat.c -o obj/mat.o $(LIBS)
 
-obj/transform.o: src/transform.c
+obj/transform.o: src/transform.c include/transform.h
 	$(CC) -c $(FLAGS) src/transform.c -o obj/transform.o $(LIBS)
 
-obj/camera.o: src/camera.c
+obj/camera.o: src/camera.c include/camera.h
 	$(CC) -c $(FLAGS) src/camera.c -o obj/camera.o $(LIBS)

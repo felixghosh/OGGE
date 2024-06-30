@@ -13,9 +13,6 @@
 #include "transform.h"
 #include "camera.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 //Globals
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
@@ -24,7 +21,7 @@ GLuint fbo;
 GLuint rbo;
 GLuint rbod;
 GLuint uniform_loc_time, uniform_loc_model, uniform_loc_view, uniform_loc_projection;
-object quad, cube;
+object *monkey, *cube;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
@@ -45,7 +42,7 @@ void update_time()
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-//   printf("fps: %5u\n", (int)(1 / elapsed_time));
+  printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -58,101 +55,17 @@ void getOpenGLVersionInfo(){
 
 void vertexSpecification() {
     //------------Set up primitives-------------
-    GLfloat vertices[] = {
-     0.5f,  0.5f, 0.0f,  // top right
-     0.5f, -0.5f, 0.0f,  // bottom right
-    -0.5f, -0.5f, 0.0f,  // bottom left
-    -0.5f,  0.5f, 0.0f,   // top left
 
-    //colors
-     0.0f,  0.0f, 1.0f,  // top right
-     0.0f,  1.0f, 0.0f,  // bottom right
-     1.0f,  0.0f, 0.0f,  // bottom left
-     1.0f,  1.0f, 0.0f,   // top left
+    //------cube-------
+    object_load_obj(cube, "models/cube.obj", NULL, (vec4){{0.0, 0.0, 0.0, 1.0}}, (vec3){{0.0f, 0.0f, -2.0f}}, 1.0f);
+    uniform_loc_model = glGetUniformLocation(cube->shader_program, "model_mat");
+    uniform_loc_view = glGetUniformLocation(cube->shader_program, "view_mat");
+    uniform_loc_projection = glGetUniformLocation(cube->shader_program, "projection_mat");
 
-    //tex-coords
-    1.0f, 1.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    0.0f, 1.0f
-    };
-    GLuint indices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
-    };
-    quad.vertices = vertices;
-    quad.indices = indices;
-    quad.num_vertices = 6;
-
-    //textures
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load("textures/container.jpg", &width, &height, &nrChannels, 0);
-    object_gen_textures(&quad, 1);
-    object_bind_texture(&quad, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-
-
-    object_gen_buffers(&quad);
-    object_bind_buffers(&quad);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof vertices, vertices, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof indices, indices, GL_DYNAMIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)(12*sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)(24*sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
-
-    uniform_loc_time = glGetUniformLocation(quad.shader_program, "time");
-
-
-    //-------------------cube---------------------
-    vec4 cube_vertices[16] = {
-        {{-1.0, -1.0, -1.0, 1.0}}, {{ 1.0, -1.0, -1.0, 1.0}},
-        {{ 1.0,  1.0, -1.0, 1.0}}, {{-1.0,  1.0, -1.0, 1.0}},
-        {{-1.0, -1.0,  1.0, 1.0}}, {{1.0, -1.0,  1.0, 1.0}},
-        {{ 1.0,  1.0,  1.0, 1.0}}, {{-1.0,  1.0,  1.0, 1.0}},
-
-        {{0.0, 0.0, 0.0, 1.0}},{{1.0, 0.0, 0.0, 1.0}},
-        {{1.0, 1.0, 0.0, 1.0}},{{0.0, 1.0, 0.0, 1.0}},
-        {{0.0, 0.0, 1.0, 1.0}},{{1.0, 0.0, 1.0, 1.0}},
-        {{0.0, 1.0, 1.0, 1.0}},{{1.0, 1.0, 1.0, 1.0}}
-    };
-    GLuint cube_indices[] = {
-        0, 3, 2, 0, 2, 1,
-        2, 3, 7, 2, 7, 6,
-        3, 0, 4, 3, 4, 7,
-        1, 2, 6, 1, 6, 5,
-        4, 5, 6, 4, 6, 7,
-        5, 4, 0, 5, 0, 1
-    };
-
-    cube.num_vertices = 36;
-    cube.pos = (vec3){{0.0f, 0.0f, -2.0f}};
-    cube.scale = 1.0f;
-    object_gen_buffers(&cube);
-    object_bind_buffers(&cube);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof cube_vertices, cube_vertices, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof cube_indices, cube_indices, GL_DYNAMIC_DRAW);
-
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(32*sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    uniform_loc_model = glGetUniformLocation(cube.shader_program, "model_mat");
-    uniform_loc_view = glGetUniformLocation(cube.shader_program, "view_mat");
-    uniform_loc_projection = glGetUniformLocation(cube.shader_program, "projection_mat");
-    clock_gettime(CLOCK_REALTIME, &t0);
+    object_load_obj(monkey, "models/monkey.obj", NULL, (vec4){{0.0, 0.0, 0.0, 1.0}}, (vec3){{2.0f, 2.0f, -3.0f}}, 2.0f);
+    uniform_loc_model = glGetUniformLocation(monkey->shader_program, "model_mat");
+    uniform_loc_view = glGetUniformLocation(monkey->shader_program, "view_mat");
+    uniform_loc_projection = glGetUniformLocation(monkey->shader_program, "projection_mat");
 }
 
 void createGraphicsPipeline(){
@@ -170,8 +83,11 @@ void createGraphicsPipeline(){
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
     //------------Load & compile shaders, attach and link to program---------
-    object_attach_shaders(&quad, "shaders/quad_vert.glsl", "shaders/quad_frag.glsl");
-    object_attach_shaders(&cube, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
+    // object_attach_shaders(&quad, "shaders/quad_vert.glsl", "shaders/quad_frag.glsl");
+    cube = object_create();
+    object_attach_shaders(cube, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
+    monkey = object_create();
+    object_attach_shaders(monkey, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
 }
 
 void init() {
@@ -223,6 +139,7 @@ void init() {
 
     createGraphicsPipeline();
     vertexSpecification();
+    clock_gettime(CLOCK_REALTIME, &t0);
 }
 
 void handleInput() {
@@ -243,7 +160,7 @@ void handleInput() {
             // else if (keypressed == SDLK_i)
             // { // i
             //     //Toggle debug state
-            //     debug = !debug;
+            //     // debug = !debug;
             // }
         }
         // Mouse movement
@@ -267,20 +184,20 @@ void handleInput() {
 
      // Multiple keypresses
     if (keystates[SDL_SCANCODE_W]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*-1.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*-1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*-1.0f * 2.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*-1.0f * 2.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_S]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*1.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*1.0f * 2.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*1.0f * 2.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_A]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * 2.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * 2.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_D]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * elapsed_time;
+       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * 2.0f * elapsed_time;
+       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * 2.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_R]){
        game_camera.y += 1.0f * elapsed_time;
@@ -329,22 +246,29 @@ void draw() {
     mat4 ry = transform_rotate_y(theta[Y]);
     mat4 rx = transform_rotate_x(theta[X]);
 
-    model = object_model_mat(&cube);
+    model = object_model_mat(cube);
     model = mat4_mul(model, rx);
-    model = mat4_mul(model, ry);
+    // model = mat4_mul(model, ry);
     model = mat4_mul(model, rz);
 
-    view = camera_view_mat(&game_camera, cube);
+    view = camera_view_mat(&game_camera, *cube);
 
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
     projection = camera_perspective(2.2f, 16.0f/9.0f, 0.01, 1000.0);
 
-    object_use(&cube);
+    object_use(cube);
     glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
     glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
     glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
-    object_render(&cube);
+    object_render(cube);
+
+    model = object_model_mat(monkey);
+    object_use(monkey);
+    glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
+    object_render(monkey);
 }
 
 void postDraw() {
@@ -372,6 +296,8 @@ void mainLoop() {
 }
 
 void terminate() {
+    object_free(cube);
+    object_free(monkey);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
