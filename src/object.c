@@ -77,7 +77,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     } while(buf[0] != 'v');
 
     vec4 *obj_vertices_colors = checked_calloc(2*num_vertices, sizeof (vec4));
-    for(int i = 0; i < num_vertices; i++){
+    for(unsigned long i = 0; i < num_vertices; i++){
         endptr = buf;
         double values[3];
         for(int i = 0; i < 3; i++){
@@ -89,7 +89,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     }
 
     vec3 *obj_normals = checked_calloc(num_normals, sizeof (vec3));
-    for(int i = 0; i < num_normals; i++){
+    for(unsigned long i = 0; i < num_normals; i++){
         endptr = buf;
         double values[3];
         values[0] = strtod(endptr+2, &endptr)*-1.0;
@@ -100,7 +100,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     }
 
     vec2* obj_tex_coords = checked_calloc(num_tex_coords, sizeof (vec2));
-    for(int i = 0; i < num_tex_coords; i++){
+    for(unsigned long i = 0; i < num_tex_coords; i++){
 
         endptr = buf;
         double values[2];
@@ -111,7 +111,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     }
 
     GLuint *obj_indices = checked_calloc(9*num_indices, sizeof (GLuint));
-    for(int i = 0; i < num_indices; i++){
+    for(unsigned long i = 0; i < num_indices; i++){
         getline(&buf, &buf_size, fp);
         endptr = buf;
         for(int j = 0; j < 3; j++){

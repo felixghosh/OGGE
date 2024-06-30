@@ -27,7 +27,7 @@ mat4 camera_perspective(float fovy, float aspect, float near, float far){
     float bottom = near * tan(fovy);
     float top = -bottom;
     float right = top * aspect;
-    float left = -right;
+    //float left = -right;
     mat4 N = {{
         {near/right, 0.0f, 0.0f, 0.0f},
         {0.0f, near/top, 0.0f, 0.0f},
@@ -37,7 +37,7 @@ mat4 camera_perspective(float fovy, float aspect, float near, float far){
     return N;
 }
 
-mat4 camera_pitch(camera *c, float deg){
+void camera_pitch(camera *c, float deg){
     if(c->theta_x + deg < -90.0f)
         c->theta_x = -90.0f;
     else if(c->theta_x + deg > 90.0f)
@@ -46,7 +46,7 @@ mat4 camera_pitch(camera *c, float deg){
         c->theta_x += deg;
 }
 
-mat4 camera_yaw(camera *c, float deg){
+void camera_yaw(camera *c, float deg){
     c->theta_y += deg;
 }
 

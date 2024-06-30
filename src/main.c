@@ -42,7 +42,7 @@ void update_time()
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-  printf("fps: %5u\n", (int)(1 / elapsed_time));
+//   printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -248,7 +248,7 @@ void draw() {
 
     model = object_model_mat(cube);
     model = mat4_mul(model, rx);
-    // model = mat4_mul(model, ry);
+    model = mat4_mul(model, ry);
     model = mat4_mul(model, rz);
 
     view = camera_view_mat(&game_camera, *cube);

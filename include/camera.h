@@ -18,9 +18,9 @@ mat4 camera_frustum(float left, float right, float bottom, float top, float near
 
 mat4 camera_perspective(float fovy, float aspect, float near, float far);
 
-mat4 camera_pitch(camera *c, float deg);
+void camera_pitch(camera *c, float deg);
 
-mat4 camera_yaw(camera *c, float deg);
+void camera_yaw(camera *c, float deg);
 
 mat4 camera_view_mat(camera *c, object o);
 
