@@ -21,7 +21,7 @@ GLuint fbo;
 GLuint rbo;
 GLuint rbod;
 GLuint uniform_loc_time, uniform_loc_model, uniform_loc_view, uniform_loc_projection;
-object *monkey, *cube;
+object *monkey, *cube, *room;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
@@ -66,6 +66,11 @@ void vertexSpecification() {
     uniform_loc_model = glGetUniformLocation(monkey->shader_program, "model_mat");
     uniform_loc_view = glGetUniformLocation(monkey->shader_program, "view_mat");
     uniform_loc_projection = glGetUniformLocation(monkey->shader_program, "projection_mat");
+
+    object_load_obj(room, "models/room.obj", NULL, (vec4){{0.0, 0.0, 0.0, 1.0}}, (vec3){{0.0f, -1.0f, 0.0f}}, 10.0f);
+    uniform_loc_model = glGetUniformLocation(monkey->shader_program, "model_mat");
+    uniform_loc_view = glGetUniformLocation(monkey->shader_program, "view_mat");
+    uniform_loc_projection = glGetUniformLocation(monkey->shader_program, "projection_mat");
 }
 
 void createGraphicsPipeline(){
@@ -82,12 +87,16 @@ void createGraphicsPipeline(){
     glBindRenderbuffer(GL_RENDERBUFFER, rbod);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
-    //------------Load & compile shaders, attach and link to program---------
-    // object_attach_shaders(&quad, "shaders/quad_vert.glsl", "shaders/quad_frag.glsl");
+
+
+    //Create Objects, Load & compile shaders, attach and link to object program
     cube = object_create();
     object_attach_shaders(cube, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
     monkey = object_create();
     object_attach_shaders(monkey, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
+    room = object_create();
+    object_attach_shaders(room, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
+
 }
 
 void init() {
@@ -269,6 +278,13 @@ void draw() {
     glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
     glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
     object_render(monkey);
+
+    model = object_model_mat(room);
+    object_use(room);
+    glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
+    object_render(room);
 }
 
 void postDraw() {
@@ -298,6 +314,7 @@ void mainLoop() {
 void terminate() {
     object_free(cube);
     object_free(monkey);
+    object_free(room);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }

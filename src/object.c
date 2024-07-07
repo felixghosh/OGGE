@@ -76,15 +76,16 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
         getline(&buf, &buf_size, fp);
     } while(buf[0] != 'v');
 
-    vec4 *obj_vertices_colors = checked_calloc(2*num_vertices, sizeof (vec4));
+    vec4 *obj_vertices = checked_calloc(num_vertices, sizeof (vec4));
+    vec4 *obj_colors = checked_calloc(num_vertices, sizeof (vec4));
     for(unsigned long i = 0; i < num_vertices; i++){
         endptr = buf;
         double values[3];
         for(int i = 0; i < 3; i++){
             values[i] = strtod(endptr+1, &endptr);
         }
-        obj_vertices_colors[i] = (vec4){{values[0], values[1], values[2], 1.0f}};
-        obj_vertices_colors[i + num_vertices] = vec4_add(color, (vec4){{(i%3+1)/3, ((i+1)%3+1)/3, ((i+2)%3+1)/3, 0.0}});
+        obj_vertices[i] = (vec4){{values[0], values[1], values[2], 1.0f}};
+        obj_colors[i] = vec4_add(color, (vec4){{(i%3+1)/3, ((i+1)%3+1)/3, ((i+2)%3+1)/3, 0.0}});
         getline(&buf, &buf_size, fp);
     }
 
@@ -124,7 +125,14 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     object_gen_buffers(obj);
     object_bind_buffers(obj);
 
-    glBufferData(GL_ARRAY_BUFFER, num_vertices*4*2*sizeof(GLfloat), obj_vertices_colors, GL_DYNAMIC_DRAW);
+    GLsizeiptr vertices_size = num_vertices*4*sizeof(GLfloat);
+    GLsizeiptr colors_size = num_vertices*4*sizeof(GLfloat);
+
+    GLsizeiptr total_size = vertices_size + colors_size;
+
+    glBufferData(GL_ARRAY_BUFFER, total_size, NULL, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, obj_vertices);
+    glBufferSubData(GL_ARRAY_BUFFER, vertices_size, colors_size, obj_colors);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*3*sizeof(GLuint), obj_indices, GL_DYNAMIC_DRAW);
 
     //Attribute 0 - vertex position
@@ -135,7 +143,8 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(num_vertices*4*sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
 
-    checked_free(obj_vertices_colors);
+    checked_free(obj_vertices);
+    checked_free(obj_colors);
     checked_free(obj_normals);
     checked_free(obj_tex_coords);
     checked_free(obj_indices);
