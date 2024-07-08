@@ -69,6 +69,8 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
 
     rewind(fp);
 
+    // printf("num_vertices: %lu\nnum_normals: %lu\nnum_txcrds: %lu\nnum_indices: %lu\n\n", num_vertices, num_normals, num_tex_coords, num_indices);
+
     obj->num_vertices = num_indices*3;
     obj->pos = position;
     obj->scale = scale;
@@ -76,16 +78,14 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
         getline(&buf, &buf_size, fp);
     } while(buf[0] != 'v');
 
-    vec4 *obj_vertices = checked_calloc(num_vertices, sizeof (vec4));
-    vec4 *obj_colors = checked_calloc(num_vertices, sizeof (vec4));
+    vec4 *vertices = checked_calloc(num_vertices, sizeof (vec4));
     for(unsigned long i = 0; i < num_vertices; i++){
         endptr = buf;
         double values[3];
         for(int i = 0; i < 3; i++){
             values[i] = strtod(endptr+1, &endptr);
         }
-        obj_vertices[i] = (vec4){{values[0], values[1], values[2], 1.0f}};
-        obj_colors[i] = color;//vec4_add(color, (vec4){{(i%3+1)/3, ((i+1)%3+1)/3, ((i+2)%3+1)/3, 0.0}});
+        vertices[i] = (vec4){{values[0], values[1], values[2], 1.0f}};
         getline(&buf, &buf_size, fp);
     }
 
@@ -100,44 +100,71 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
         getline(&buf, &buf_size, fp);
     }
 
-    vec2* obj_tex_coords = checked_calloc(num_tex_coords, sizeof (vec2));
+    vec2* tex_coords = checked_calloc(num_tex_coords, sizeof (vec2));
     for(unsigned long i = 0; i < num_tex_coords; i++){
 
         endptr = buf;
         double values[2];
         values[0] = strtod(endptr+2, &endptr);
         values[1] = strtod(endptr+1, &endptr);
-        obj_tex_coords[i] = (vec2){{values[0], values[1]}};
+        tex_coords[i] = (vec2){{values[0], values[1]}};
         getline(&buf, &buf_size, fp);
     }
 
     GLuint *obj_indices = checked_calloc(3*num_indices, sizeof (GLuint));
+    vec4 *obj_vertices = checked_calloc(3*num_indices, sizeof (vec4));
+    vec4 *obj_colors = checked_calloc(3*num_indices, sizeof (vec4));
     vec3 *obj_normals = checked_calloc(3*num_indices, sizeof (vec3));
+    vec2 *obj_tex_coords = checked_calloc(3*num_indices, sizeof (vec2));
     for(unsigned long i = 0; i < num_indices; i++){
         getline(&buf, &buf_size, fp);
         endptr = buf;
         for(int j = 0; j < 3; j++){
-            unsigned int vertice_index = strtol(endptr+1, &endptr, 10)-1;
-            obj_indices[(i*3)+j] = vertice_index;
-            /*tex_coord =*/strtol(endptr+1, &endptr, 10)-1;
-            unsigned int normal_index = strtol(endptr+1, &endptr, 10)-1;
-            obj_normals[vertice_index] = normals[normal_index];
+            unsigned long long vertice_index = strtoll(endptr+1, &endptr, 10)-1;
+            obj_vertices[(i*3)+j] = vertices[vertice_index];
+            obj_colors[(i*3)+j] = color;
+            // obj_indices[(i*3)+j] = vertice_index;
+            unsigned long long tex_coord_index = strtoll(endptr+1, &endptr, 10)-1;
+            obj_tex_coords[(i*3)+j] = tex_coords[tex_coord_index];
+            unsigned long long normal_index = strtoll(endptr+1, &endptr, 10)-1;
+            obj_normals[(i*3)+j] = normals[normal_index];
         }
     }
+    // for(unsigned long i = 0; i < num_indices*3; i++){
+    //     printf("%lu: ", i);
+    //     vec4_print(obj_vertices[i]);
+    // }
+    // printf("\n");
+    // for(unsigned long i = 0; i < num_indices*3; i++){
+    //     printf("%lu: ", i);
+    //     vec4_print(obj_colors[i]);
+    // }
+    // printf("\n");
+    // for(unsigned long i = 0; i < num_indices*3; i++){
+    //     printf("%lu: ", i);
+    //     vec3_print(obj_normals[i]);
+    // }
+    // printf("\n");
+    // for(unsigned long i = 0; i < num_indices*3; i++){
+    //     printf("%lu: ", i);
+    //     vec2_print(obj_tex_coords[i]);
+    // }
 
     object_gen_buffers(obj);
     object_bind_buffers(obj);
 
-    GLsizeiptr vertices_size = num_vertices*4*sizeof(GLfloat);
-    GLsizeiptr colors_size = num_vertices*4*sizeof(GLfloat);
-    GLsizeiptr normals_size = num_vertices*3*sizeof(GLfloat);
-    GLsizeiptr total_size = vertices_size + colors_size + normals_size;
+    GLsizeiptr vertices_size = 3*num_indices*4*sizeof(GLfloat);
+    GLsizeiptr colors_size = 3*num_indices*4*sizeof(GLfloat);
+    GLsizeiptr normals_size = 3*num_indices*3*sizeof(GLfloat);
+    GLsizeiptr tex_coords_size = 3*num_indices*2*sizeof(GLfloat);
+    GLsizeiptr total_size = vertices_size + colors_size + normals_size + tex_coords_size;
 
     glBufferData(GL_ARRAY_BUFFER, total_size, NULL, GL_DYNAMIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, obj_vertices);
     glBufferSubData(GL_ARRAY_BUFFER, vertices_size, colors_size, obj_colors);
     glBufferSubData(GL_ARRAY_BUFFER, vertices_size+colors_size, normals_size, obj_normals);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*3*sizeof(GLuint), obj_indices, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, vertices_size+colors_size+normals_size, tex_coords_size, obj_tex_coords);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*3*sizeof(GLuint), obj_indices, GL_DYNAMIC_DRAW);
 
     //Attribute 0 - vertex position
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -151,10 +178,16 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size+colors_size));
     glEnableVertexAttribArray(2);
 
+    //Atribute 3 - vertex normal
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size+colors_size+normals_size));
+    glEnableVertexAttribArray(3);
+
+    checked_free(vertices);
     checked_free(obj_vertices);
     checked_free(obj_colors);
     checked_free(normals);
     checked_free(obj_normals);
+    checked_free(tex_coords);
     checked_free(obj_tex_coords);
     checked_free(obj_indices);
     checked_free(buf);
@@ -188,23 +221,26 @@ void object_attach_shaders(object *obj, const char *vertex_shader_path, const ch
 
 void object_render(object *obj) {
     glBindVertexArray(obj->vao);
-    glDrawElements(GL_TRIANGLES, obj->num_vertices, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_TRIANGLES, 0, obj->num_vertices);
 }
 
 void object_use(object *obj) {
     glUseProgram(obj->shader_program);
+    object_bind_buffers(obj); //Not needed?
+    if(obj->textures != NULL)
+        object_bind_texture(obj, 0);
 }
 
 void object_gen_buffers(object *obj) {
     glGenVertexArrays(1, &(obj->vao));
     glGenBuffers(1, &(obj->vbo));
-    glGenBuffers(1, &(obj->ebo));
+    // glGenBuffers(1, &(obj->ebo));
 }
 
 void object_bind_buffers(object *obj) {
     glBindVertexArray(obj->vao);
     glBindBuffer(GL_ARRAY_BUFFER, obj->vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
 }
 
 void object_gen_textures(object *obj, unsigned int num_textures) {

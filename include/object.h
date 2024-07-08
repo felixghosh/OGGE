@@ -22,6 +22,7 @@ typedef struct object {
     GLuint uniform_loc_projection;
     GLuint uniform_loc_light_pos;
     GLuint uniform_loc_camera_pos;
+    GLuint uniform_loc_is_textured;
 } object;
 
 void    object_load_obj(object *obj, const char *obj_filepath, const char *tex_filepath, vec4 color, vec3 position, float scale);

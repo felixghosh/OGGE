@@ -15,6 +15,7 @@ vec2  vec2_div_scalar(vec2 a, float b);
 vec2  vec2_normalize (vec2 a);
 float vec2_dot       (vec2 a, vec2 b);
 float vec2_length    (vec2 a);
+void  vec2_print     (vec2 a);
 
 
 //--------VEC3--------
@@ -48,5 +49,6 @@ vec4  vec4_div_scalar(vec4 a, float b);
 vec4  vec4_normalize (vec4 a);
 float vec4_dot       (vec4 a,  vec4 b);
 float vec4_length    (vec4 a);
+void  vec4_print     (vec4 a);
 
 #endif

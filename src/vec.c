@@ -41,6 +41,10 @@ float vec2_length(vec2 a){
     return sqrt((a.v[0]*a.v[0]) + (a.v[1]*a.v[1]));
 }
 
+void  vec2_print(vec2 a){
+    printf("(%2.2f, %2.2f)\n", a.v[0], a.v[1]);
+}
+
 
 //--------VEC3--------
 vec3 vec3_add(vec3 a, vec3 b){
@@ -130,4 +134,8 @@ float vec4_dot(vec4 a, vec4 b){
 
 float vec4_length(vec4 a){
     return sqrt((a.v[0]*a.v[0]) + (a.v[1]*a.v[1]) + (a.v[2]*a.v[2]) + (a.v[3]*a.v[3]));
+}
+
+void  vec4_print(vec4 a){
+    printf("(%2.2f, %2.2f, %2.2f, %2.2f)\n", a.v[0], a.v[1], a.v[2], a.v[3]);
 }

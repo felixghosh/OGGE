@@ -1,4 +1,5 @@
 #include "gl_utils.h"
+#include "gcl_error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,8 +7,7 @@
 GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
     FILE* fp = fopen(filepath, "r");
     if(fp == NULL){
-        fprintf(stderr, "Error! Shader source file can't be opened!\n");
-        exit(1);
+        error_exit("Error! Shader source file can't be opened!\n");
     }
 
     fseek(fp, 0, SEEK_END );
@@ -34,8 +34,7 @@ GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
 
     if(!success){
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        fprintf(stderr, "Error! Shader compilation failed: %s\n", infoLog);
-        exit(1);
+        error_exit("Error! Shader compilation failed: %s\n", infoLog);
     }
     free(shaderSource);
 
