@@ -6,8 +6,8 @@
 GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
     FILE* fp = fopen(filepath, "r");
     if(fp == NULL){
-        printf("Error! Shader source file can't be opened!\n");
-        return -1;
+        fprintf(stderr, "Error! Shader source file can't be opened!\n");
+        exit(1);
     }
 
     fseek(fp, 0, SEEK_END );
@@ -34,7 +34,8 @@ GLuint load_and_compile_shader(const char* filepath, enum shadertype type) {
 
     if(!success){
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        printf("Error! Shader compilation failed: %s\n", infoLog);
+        fprintf(stderr, "Error! Shader compilation failed: %s\n", infoLog);
+        exit(1);
     }
     free(shaderSource);
 
@@ -46,7 +47,7 @@ void print_vendor_info(int print_extensions) {
     vendor = glGetString(GL_VENDOR);
     renderer = glGetString(GL_RENDERER);
     version = glGetString(GL_VERSION);
-    
+
     printf("Vendor: %s\nRenderer: %s\nVersion: %s\n", vendor, renderer, version);
     // Query for OpenGL Extensions
     if(print_extensions) {

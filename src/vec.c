@@ -1,4 +1,5 @@
 #include "vec.h"
+#include <stdio.h>
 #include <math.h>
 
 //--------VEC2--------
@@ -85,6 +86,10 @@ float vec3_dot(vec3 a, vec3 b){
 
 float vec3_length(vec3 a){
     return sqrt((a.v[0]*a.v[0]) + (a.v[1]*a.v[1]) + (a.v[2]*a.v[2]));
+}
+
+void  vec3_print(vec3 a){
+    printf("(%2.2f, %2.2f, %2.2f)\n", a.v[0], a.v[1], a.v[2]);
 }
 
 

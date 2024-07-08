@@ -85,7 +85,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
             values[i] = strtod(endptr+1, &endptr);
         }
         obj_vertices[i] = (vec4){{values[0], values[1], values[2], 1.0f}};
-        obj_colors[i] = vec4_add(color, (vec4){{(i%3+1)/3, ((i+1)%3+1)/3, ((i+2)%3+1)/3, 0.0}});
+        obj_colors[i] = color;//vec4_add(color, (vec4){{(i%3+1)/3, ((i+1)%3+1)/3, ((i+2)%3+1)/3, 0.0}});
         getline(&buf, &buf_size, fp);
     }
 

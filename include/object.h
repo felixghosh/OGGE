@@ -16,6 +16,12 @@ typedef struct object {
     vec3 pos;
     float scale;
     vec3 orientation;
+    GLuint uniform_loc_time;
+    GLuint uniform_loc_model;
+    GLuint uniform_loc_view;
+    GLuint uniform_loc_projection;
+    GLuint uniform_loc_light_pos;
+    GLuint uniform_loc_camera_pos;
 } object;
 
 void    object_load_obj(object *obj, const char *obj_filepath, const char *tex_filepath, vec4 color, vec3 position, float scale);

@@ -32,6 +32,7 @@ vec3  vec3_cross     (vec3 a,  vec3 b);
 vec3  vec3_normalize (vec3 a);
 float vec3_dot       (vec3 a,  vec3 b);
 float vec3_length    (vec3 a);
+void  vec3_print     (vec3 a);
 
 //--------VEC4--------
 typedef struct vec4 {

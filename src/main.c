@@ -20,8 +20,8 @@ bool quit = false;
 GLuint fbo;
 GLuint rbo;
 GLuint rbod;
-GLuint uniform_loc_time, uniform_loc_model, uniform_loc_view, uniform_loc_projection, uniform_loc_light_pos, uniform_loc_camera_pos;
-object *monkey, *cube, *room;
+
+object *monkey, *cube, *room, *light;
 vec3 light_pos = {{2.0, 5.0, -2.0}};
 double elapsed_time;
 double game_time;
@@ -31,19 +31,18 @@ enum {X, Y, Z} axis;
 camera game_camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 bool wireframe = false;
 
-unsigned int renderWidth = 1600;
-unsigned int renderHeight = 900;
+unsigned int renderWidth = 480;
+unsigned int renderHeight = 270;
 unsigned int windowWidth = 1600;
 unsigned int windowHeight = 900;
 
-float far = 3.0f;
 
 void update_time()
 {
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-  printf("fps: %5u\n", (int)(1 / elapsed_time));
+//   printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -58,24 +57,31 @@ void vertexSpecification() {
     //------------Set up primitives-------------
 
     // //------cube-------
-    object_load_obj(cube, "models/cube.obj", NULL, (vec4){{0.0, 0.0, 0.0, 1.0}}, (vec3){{0.0f, 0.0f, 0.0f}}, 1.0f);
-    uniform_loc_model = glGetUniformLocation(cube->shader_program, "model_mat");
-    uniform_loc_view = glGetUniformLocation(cube->shader_program, "view_mat");
-    uniform_loc_projection = glGetUniformLocation(cube->shader_program, "projection_mat");
-    uniform_loc_light_pos = glGetUniformLocation(cube->shader_program, "light_pos");
-    uniform_loc_camera_pos = glGetUniformLocation(cube->shader_program, "camera_pos");
+    object_load_obj(cube, "models/cube.obj", NULL, (vec4){{1.0, 0.0, 0.0, 1.0}}, (vec3){{0.0f, 0.0f, 0.0f}}, 1.0f);
+    cube->uniform_loc_model = glGetUniformLocation(cube->shader_program, "model_mat");
+    cube->uniform_loc_view = glGetUniformLocation(cube->shader_program, "view_mat");
+    cube->uniform_loc_projection = glGetUniformLocation(cube->shader_program, "projection_mat");
+    cube->uniform_loc_light_pos = glGetUniformLocation(cube->shader_program, "light_pos");
+    cube->uniform_loc_camera_pos = glGetUniformLocation(cube->shader_program, "camera_pos");
 
-    object_load_obj(monkey, "models/monkey.obj", NULL, (vec4){{0.0, 0.0, 0.0, 1.0}}, (vec3){{2.0f, 2.0f, -3.0f}}, 2.0f);
-    // uniform_loc_model = glGetUniformLocation(monkey->shader_program, "model_mat");
-    // uniform_loc_view = glGetUniformLocation(monkey->shader_program, "view_mat");
-    // uniform_loc_projection = glGetUniformLocation(monkey->shader_program, "projection_mat");
-    // uniform_loc_light_pos = glGetUniformLocation(monkey->shader_program, "light_pos");
+    object_load_obj(monkey, "models/armadillo.obj", NULL, (vec4){{0.0, 1.0, 0.0, 1.0}}, (vec3){{2.0f, 2.0f, -3.0f}}, 2.0f);
+    monkey->uniform_loc_model = glGetUniformLocation(monkey->shader_program, "model_mat");
+    monkey->uniform_loc_view = glGetUniformLocation(monkey->shader_program, "view_mat");
+    monkey->uniform_loc_projection = glGetUniformLocation(monkey->shader_program, "projection_mat");
+    monkey->uniform_loc_light_pos = glGetUniformLocation(monkey->shader_program, "light_pos");
+    monkey->uniform_loc_camera_pos = glGetUniformLocation(monkey->shader_program, "camera_pos");
 
-    object_load_obj(room, "models/room.obj", NULL, (vec4){{0.0, 0.0, 0.0, 1.0}}, (vec3){{0.0f, -1.0f, 0.0f}}, 10.0f);
-    // uniform_loc_model = glGetUniformLocation(room->shader_program, "model_mat");
-    // uniform_loc_view = glGetUniformLocation(room->shader_program, "view_mat");
-    // uniform_loc_projection = glGetUniformLocation(room->shader_program, "projection_mat");
-    // uniform_loc_light_pos = glGetUniformLocation(room->shader_program, "light_pos");
+    object_load_obj(room, "models/room.obj", NULL, (vec4){{0.0, 0.0, 1.0, 1.0}}, (vec3){{0.0f, -1.0f, 0.0f}}, 10.0f);
+    room->uniform_loc_model = glGetUniformLocation(room->shader_program, "model_mat");
+    room->uniform_loc_view = glGetUniformLocation(room->shader_program, "view_mat");
+    room->uniform_loc_projection = glGetUniformLocation(room->shader_program, "projection_mat");
+    room->uniform_loc_light_pos = glGetUniformLocation(room->shader_program, "light_pos");
+    room->uniform_loc_camera_pos = glGetUniformLocation(room->shader_program, "camera_pos");
+
+    object_load_obj(light, "models/sphere.obj", NULL, (vec4){{1.0, 0.8, 0.6, 1.0}}, (vec3){{2.0, 5.0, -2.0}}, 0.5);
+    light->uniform_loc_model = glGetUniformLocation(light->shader_program, "model_mat");
+    light->uniform_loc_view = glGetUniformLocation(light->shader_program, "view_mat");
+    light->uniform_loc_projection = glGetUniformLocation(light->shader_program, "projection_mat");
 }
 
 void createGraphicsPipeline(){
@@ -101,7 +107,8 @@ void createGraphicsPipeline(){
     object_attach_shaders(monkey, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
     room = object_create();
     object_attach_shaders(room, "shaders/cube_vert.glsl", "shaders/cube_frag.glsl");
-
+    light = object_create();
+    object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
 }
 
 void init() {
@@ -265,9 +272,9 @@ void draw() {
     // model = mat4_mul(model, ry);
     // model = mat4_mul(model, rz);
 
-    // light_pos.v[0] = sin(game_time)*5.0;
-    light_pos.v[1] = sin(game_time*0.3)*3.0;
-    // light_pos.v[2] = sin(game_time*0.7)*6.0;
+    light->pos.v[0] = sin(game_time)*5.0;
+    light->pos.v[1] = sin(game_time*0.3)*3.0;
+    light->pos.v[2] = sin(game_time*0.7)*6.0;
 
     view = camera_view_mat(&game_camera, *cube);
 
@@ -276,30 +283,40 @@ void draw() {
     projection = camera_perspective(2.2f, 16.0f/9.0f, 0.01, 1000.0);
 
     object_use(cube);
-    glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
-    glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
-    glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
-    glUniform3fv(uniform_loc_light_pos, 1, (const float *)light_pos.v);
-    glUniform3f(uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
+    glUniformMatrix4fv(cube->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(cube->uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(cube->uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
+    glUniform3fv(cube->uniform_loc_light_pos, 1, (const float *)light->pos.v);
+    glUniform3f(cube->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
     object_render(cube);
 
     model = object_model_mat(monkey);
     object_use(monkey);
-    glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
-    glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
-    glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
-    glUniform3fv(uniform_loc_light_pos, 1, (const float *)light_pos.v);
-    glUniform3f(uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
+    glUniformMatrix4fv(monkey->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(monkey->uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(monkey->uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
+    glUniform3fv(monkey->uniform_loc_light_pos, 1, (const float *)light->pos.v);
+    glUniform3f(monkey->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
     object_render(monkey);
 
     model = object_model_mat(room);
     object_use(room);
-    glUniformMatrix4fv(uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
-    glUniformMatrix4fv(uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
-    glUniformMatrix4fv(uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
-    glUniform3fv(uniform_loc_light_pos, 1, (const float *)light_pos.v);
-    glUniform3f(uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
+    glUniformMatrix4fv(room->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(room->uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(room->uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
+    glUniform3fv(room->uniform_loc_light_pos, 1, (const float *)light->pos.v);
+    glUniform3f(room->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
     object_render(room);
+
+    model = object_model_mat(light);
+    object_use(light);
+    glUniformMatrix4fv(light->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(light->uniform_loc_view, 1, GL_TRUE, (const float *)view.m);
+    glUniformMatrix4fv(light->uniform_loc_projection, 1, GL_TRUE, (const float *)projection.m);
+    glUniform3fv(light->uniform_loc_light_pos, 1, (const float *)light->pos.v);
+    glUniform3f(light->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
+    object_render(light);
+    // vec3_print(light->pos);
 }
 
 void postDraw() {
@@ -330,6 +347,7 @@ void terminate() {
     object_free(cube);
     object_free(monkey);
     object_free(room);
+    object_free(light);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }

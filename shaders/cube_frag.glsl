@@ -16,22 +16,22 @@ void main()
     float ambient_c, diffuse_c, specular_c;
     vec3 ambient, diffuse, specular;
 
-    ambient_c = 0.1;
-    ambient = ambient_c * vec3(1.0, 1.0, 1.0);//color.xyz;
+    ambient_c = 0.15;
+    ambient = ambient_c * color.xyz;
 
     float light_intensity = 60.0;
     vec3 light_dir = normalize(light_pos - world_pos);
     float light_dist = abs(length(light_pos - world_pos));
-    float attenuation = 1 / (light_dist*light_dist);
+    float attenuation = 1 / (pow(light_dist, 1.5));
     diffuse_c = max(dot(norm, light_dir), 0.0) * light_intensity;
     diffuse_c *= attenuation;
     diffuse = diffuse_c * color.xyz;
 
 
-    float spec_strength = 0.1;
+    float spec_strength = 0.8;
     vec3 view_dir = normalize(camera_pos - world_pos);
     vec3 reflect_dir = reflect(-light_dir, norm);
-    specular_c = pow(max(dot(view_dir, reflect_dir), 0.0), 4) * spec_strength;
+    specular_c = pow(max(dot(view_dir, reflect_dir), 0.0), 8) * spec_strength;
     specular_c *= attenuation;
     specular = specular_c * vec3(1.0, 1.0, 1.0);
 

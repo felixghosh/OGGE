@@ -4,8 +4,6 @@ layout (location = 1) in vec4 vColor;
 layout (location = 2) in vec3 vNormal;
 
 out vec4 color;
-out vec3 normal;
-out vec3 world_pos;
 
 uniform mat4 model_mat;
 uniform mat4 view_mat;
@@ -18,6 +16,4 @@ void main()
     gl_Position = mvp*vPos;
 
     color = vColor;
-    normal = vNormal;
-    world_pos = (model_mat * vPos).xyz;
 }
