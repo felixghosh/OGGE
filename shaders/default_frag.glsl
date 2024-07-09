@@ -19,7 +19,7 @@ void main()
     float ambient_c, diffuse_c, specular_c;
     vec3 ambient, diffuse, specular;
 
-    vec3 frag_color;
+    vec3 frag_color
     if(is_textured != 0)
         frag_color = texture(ourTexture, tex_coord).xyz;
     else

@@ -57,7 +57,7 @@ void vertexSpecification() {
     //------------Set up primitives-------------
 
     // //------cube-------
-    object_load_obj(cube, "models/cube.obj", "textures/container.jpg", (vec4){{1.0, 0.0, 0.0, 1.0}}, (vec3){{-1.0f, 1.0f, -2.0f}}, 1.0f);
+    object_load_obj(cube, "models/cube.obj", NULL, (vec4){{1.0, 0.0, 0.0, 1.0}}, (vec3){{-1.0f, 1.0f, -2.0f}}, 1.0f);
     cube->uniform_loc_model = glGetUniformLocation(cube->shader_program, "model_mat");
     cube->uniform_loc_view = glGetUniformLocation(cube->shader_program, "view_mat");
     cube->uniform_loc_projection = glGetUniformLocation(cube->shader_program, "projection_mat");

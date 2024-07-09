@@ -6,6 +6,7 @@
 
 #include "transform.h"
 #include "gcl_mem.h"
+#include "gcl_error.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -38,8 +39,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     FILE *fp;
     fp = fopen(obj_filepath, "r");
     if(fp == NULL){
-        fprintf(stderr, "ERROR: Unable to open file at %s", obj_filepath);
-        exit(1);
+        error_exit("ERROR: Unable to open file at %s", obj_filepath);
     }
 
     size_t buf_size = BUFSIZ;
