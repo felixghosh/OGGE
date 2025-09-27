@@ -226,7 +226,7 @@ void object_render(object *obj) {
 
 void object_use(object *obj) {
     glUseProgram(obj->shader_program);
-    object_bind_buffers(obj); //Not needed?
+    glBindVertexArray(obj->vao);
     if(obj->textures != NULL)
         object_bind_texture(obj, 0);
 }
@@ -240,7 +240,7 @@ void object_gen_buffers(object *obj) {
 void object_bind_buffers(object *obj) {
     glBindVertexArray(obj->vao);
     glBindBuffer(GL_ARRAY_BUFFER, obj->vbo);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
 }
 
 void object_gen_textures(object *obj, unsigned int num_textures) {
