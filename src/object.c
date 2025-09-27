@@ -123,7 +123,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
             unsigned long long vertice_index = strtoll(endptr+1, &endptr, 10)-1;
             obj_vertices[(i*3)+j] = vertices[vertice_index];
             obj_colors[(i*3)+j] = color;
-            // obj_indices[(i*3)+j] = vertice_index;
+            obj_indices[(i*3)+j] = vertice_index;
             unsigned long long tex_coord_index = strtoll(endptr+1, &endptr, 10)-1;
             obj_tex_coords[(i*3)+j] = tex_coords[tex_coord_index];
             unsigned long long normal_index = strtoll(endptr+1, &endptr, 10)-1;
@@ -164,7 +164,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     glBufferSubData(GL_ARRAY_BUFFER, vertices_size, colors_size, obj_colors);
     glBufferSubData(GL_ARRAY_BUFFER, vertices_size+colors_size, normals_size, obj_normals);
     glBufferSubData(GL_ARRAY_BUFFER, vertices_size+colors_size+normals_size, tex_coords_size, obj_tex_coords);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*3*sizeof(GLuint), obj_indices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*3*sizeof(GLuint), obj_indices, GL_DYNAMIC_DRAW);
 
     //Attribute 0 - vertex position
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
@@ -234,13 +234,13 @@ void object_use(object *obj) {
 void object_gen_buffers(object *obj) {
     glGenVertexArrays(1, &(obj->vao));
     glGenBuffers(1, &(obj->vbo));
-    // glGenBuffers(1, &(obj->ebo));
+    glGenBuffers(1, &(obj->ebo)); //TODO - fix EBO implementation
 }
 
 void object_bind_buffers(object *obj) {
     glBindVertexArray(obj->vao);
     glBindBuffer(GL_ARRAY_BUFFER, obj->vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo); //TODO - fix EBO implementation
 }
 
 void object_gen_textures(object *obj, unsigned int num_textures) {

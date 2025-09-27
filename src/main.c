@@ -44,6 +44,7 @@ void update_time()
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
   printf("fps: %5u\n", (int)(1 / elapsed_time));
+  printf("time_delta: %lfms\n", elapsed_time*1000);
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
