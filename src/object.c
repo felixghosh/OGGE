@@ -39,7 +39,7 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     FILE *fp;
     fp = fopen(obj_filepath, "r");
     if(fp == NULL){
-        error_exit("ERROR: Unable to open file at %s", obj_filepath);
+        error_exit("ERROR: Unable to open file at %s\n", obj_filepath);
     }
 
     size_t buf_size = BUFSIZ;
@@ -212,7 +212,7 @@ void object_attach_shaders(object *obj, const char *vertex_shader_path, const ch
     glGetProgramiv(obj->shader_program, GL_LINK_STATUS, &success);
     if(!success) {
         glGetProgramInfoLog(obj->shader_program, 512, NULL, infoLog);
-        printf("Error! Program linking failed: %s\n", infoLog);
+        warning("Warning! Program linking failed: %s\n", infoLog);
     }
 
     glDeleteShader(vertex_shader);

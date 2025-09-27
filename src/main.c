@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include "gcl_mem.h"
+#include "gcl_error.h"
 
 #include "vec.h"
 #include "mat.h"
@@ -144,8 +145,7 @@ void init() {
 
     GLenum glew_init = glewInit();
     if (glew_init != GLEW_OK) {
-        fprintf(stderr, "Error: %s\n", glewGetErrorString(glew_init));
-        exit(1);
+        error_exit("Error: %s\n", glewGetErrorString(glew_init));
     }
 
     glEnable(GL_DEPTH_TEST);
