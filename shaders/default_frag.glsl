@@ -19,13 +19,13 @@ void main()
     float ambient_c, diffuse_c, specular_c;
     vec3 ambient, diffuse, specular;
 
-    vec3 frag_color
+    vec3 frag_color;
     if(is_textured != 0)
         frag_color = texture(ourTexture, tex_coord).xyz;
     else
         frag_color = color.xyz;
 
-    ambient_c = 0.15;
+    ambient_c = 0.35;
     ambient = ambient_c * frag_color;
 
     float light_intensity = 60.0;

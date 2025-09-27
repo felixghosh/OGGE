@@ -43,7 +43,7 @@ void update_time()
   clock_gettime(CLOCK_REALTIME, &t1);
   elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
   game_time += elapsed_time;
-//   printf("fps: %5u\n", (int)(1 / elapsed_time));
+  printf("fps: %5u\n", (int)(1 / elapsed_time));
   clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -74,7 +74,7 @@ void vertexSpecification() {
     monkey->uniform_loc_camera_pos = glGetUniformLocation(monkey->shader_program, "camera_pos");
     monkey->uniform_loc_is_textured = glGetUniformLocation(monkey->shader_program, "is_textured");
 
-    object_load_obj(room, "models/room.obj", NULL, (vec4){{0.0, 0.0, 1.0, 1.0}}, (vec3){{0.0f, -1.0f, 0.0f}}, 10.0f);
+    object_load_obj(room, "models/room.obj", "textures/container.jpg", (vec4){{0.0, 0.0, 1.0, 1.0}}, (vec3){{0.0f, -1.0f, 0.0f}}, 10.0f);
     room->uniform_loc_model = glGetUniformLocation(room->shader_program, "model_mat");
     room->uniform_loc_view = glGetUniformLocation(room->shader_program, "view_mat");
     room->uniform_loc_projection = glGetUniformLocation(room->shader_program, "projection_mat");
@@ -225,10 +225,10 @@ void handleInput() {
        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * 2.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_R]){
-       game_camera.y += 1.0f * elapsed_time;
+       game_camera.y += 3.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_F]){
-       game_camera.y -= 1.0f * elapsed_time;
+       game_camera.y -= 3.0f * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_Q]){
         camera_yaw(&game_camera, 40.0f * elapsed_time);
