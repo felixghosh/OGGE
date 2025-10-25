@@ -39,8 +39,6 @@ void    object_use(object *obj);
 
 void    object_gen_buffers(object *obj);
 
-void    object_bind_buffers(object *obj);
-
 void    object_gen_textures(object *obj, unsigned int num_textures);
 
 void    object_bind_texture(object *obj, unsigned int index);

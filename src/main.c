@@ -47,8 +47,8 @@ void update_time()
     clock_gettime(CLOCK_REALTIME, &t1);
     elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
     game_time += elapsed_time;
-    printf("fps: %5u\n", (int)(1 / elapsed_time));
-    printf("time_delta: %lfms\n", elapsed_time * 1000);
+    // printf("fps: %5u\n", (int)(1 / elapsed_time));
+    // printf("time_delta: %lfms\n", elapsed_time * 1000);
     clock_gettime(CLOCK_REALTIME, &t0);
 }
 
@@ -131,7 +131,7 @@ void init()
     }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);

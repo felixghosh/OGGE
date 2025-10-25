@@ -151,7 +151,6 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     // }
 
     object_gen_buffers(obj);
-    object_bind_buffers(obj);
 
     GLsizeiptr vertices_size = 3*num_indices*4*sizeof(GLfloat);
     GLsizeiptr colors_size = 3*num_indices*4*sizeof(GLfloat);
@@ -159,28 +158,36 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     GLsizeiptr tex_coords_size = 3*num_indices*2*sizeof(GLfloat);
     GLsizeiptr total_size = vertices_size + colors_size + normals_size + tex_coords_size;
 
-    glBufferData(GL_ARRAY_BUFFER, total_size, NULL, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, obj_vertices);
-    glBufferSubData(GL_ARRAY_BUFFER, vertices_size, colors_size, obj_colors);
-    glBufferSubData(GL_ARRAY_BUFFER, vertices_size+colors_size, normals_size, obj_normals);
-    glBufferSubData(GL_ARRAY_BUFFER, vertices_size+colors_size+normals_size, tex_coords_size, obj_tex_coords);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*3*sizeof(GLuint), obj_indices, GL_DYNAMIC_DRAW);
+    glNamedBufferStorage(obj->vbo, total_size, NULL, GL_DYNAMIC_STORAGE_BIT); //allocate the buffer object's immutable data store. The flag makes it so we can update the data with glBufferSubData
+    glNamedBufferSubData(obj->vbo, 0, vertices_size, obj_vertices);
+    glNamedBufferSubData(obj->vbo, vertices_size, colors_size, obj_colors);
+    glNamedBufferSubData(obj->vbo, vertices_size+colors_size, normals_size, obj_normals);
+    glNamedBufferSubData(obj->vbo, vertices_size+colors_size+normals_size, tex_coords_size, obj_tex_coords);
+    // glNamedBufferStorage(obj->ebo num_indices*3*sizeof(GLuint), obj_indices, 0/*GL_DYNAMIC_STORAGE_BIT*/ );  //allocate and initialize element buffer object
 
     //Attribute 0 - vertex position
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    glEnableVertexAttribArray(0);
+    glVertexArrayVertexBuffer(obj->vao, 0, obj->vbo, 0, 4 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, 0, 4, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, 0);
+    glVertexArrayAttribBinding(obj->vao, 0, 0);
 
     //Atribute 1 - vertex color
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size));
-    glEnableVertexAttribArray(1);
+    glVertexArrayVertexBuffer(obj->vao, 1, obj->vbo, vertices_size, 4 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, 1, 4, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, 1);
+    glVertexArrayAttribBinding(obj->vao, 1, 1);
 
     //Atribute 2 - vertex normal
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size+colors_size));
-    glEnableVertexAttribArray(2);
+    glVertexArrayVertexBuffer(obj->vao, 2, obj->vbo, (vertices_size+colors_size), 3 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, 2, 3, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, 2);
+    glVertexArrayAttribBinding(obj->vao, 2, 2);
 
     //Atribute 3 - vertex normal
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (void*)(vertices_size+colors_size+normals_size));
-    glEnableVertexAttribArray(3);
+    glVertexArrayVertexBuffer(obj->vao, 3, obj->vbo, (vertices_size+colors_size+normals_size), 2 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, 3, 2, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, 3);
+    glVertexArrayAttribBinding(obj->vao, 3, 3);
 
     checked_free(vertices);
     checked_free(obj_vertices);
@@ -232,15 +239,10 @@ void object_use(object *obj) {
 }
 
 void object_gen_buffers(object *obj) {
-    glGenVertexArrays(1, &(obj->vao));
-    glGenBuffers(1, &(obj->vbo));
-    glGenBuffers(1, &(obj->ebo)); //TODO - fix EBO implementation
-}
-
-void object_bind_buffers(object *obj) {
-    glBindVertexArray(obj->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, obj->vbo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->ebo); //TODO - fix EBO implementation
+    glCreateVertexArrays(1, &(obj->vao));
+    glCreateBuffers(1, &(obj->vbo));
+    // glCreateBuffers(1, &(obj->ebo)); //TODO - fix EBO implementation. Rewrite object_load_obj function to not manually copy each vertex for each triangle.
+    //Instead just store each vertex in the buffer once, store the number of indices in the object, and replace glDrawArrays with glDrawElements
 }
 
 void object_gen_textures(object *obj, unsigned int num_textures) {
