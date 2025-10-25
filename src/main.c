@@ -235,22 +235,23 @@ void handleInput()
         }
     }
 
+    float player_speed = 10.0;
     // Multiple keypresses
     if (keystates[SDL_SCANCODE_W]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * 2.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * 2.0f * elapsed_time;
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_S]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * 2.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * 2.0f * elapsed_time;
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_A]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * 2.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * 2.0f * elapsed_time;
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_D]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * 2.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * 2.0f * elapsed_time;
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_R]) {
         game_camera.y += 3.0f * elapsed_time;
@@ -277,12 +278,12 @@ void handleInput()
     Sint16 right_joy_x = SDL_JoystickGetAxis(controller_0_joy, 2); // get axis 2 (right stick X)
     Sint16 right_joy_y = SDL_JoystickGetAxis(controller_0_joy, 3); // get axis 3 (right stick Y)
     if(abs(left_joy_x) > 2000) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * left_joy_x/2000.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * left_joy_x/2000.0f * elapsed_time;
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
     }
     if(abs(left_joy_y) > 2000) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * left_joy_y/2000.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * left_joy_y/2000.0f * elapsed_time;
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
     }
     if(abs(right_joy_x) > 2000) {
         camera_yaw(&game_camera, -right_joy_x/200.0f * elapsed_time);
