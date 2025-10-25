@@ -14,7 +14,7 @@
 #include "transform.h"
 #include "camera.h"
 
-//Globals
+// Globals
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
 bool quit = false;
@@ -28,7 +28,12 @@ double elapsed_time;
 double game_time;
 struct timespec t0, t1;
 float theta[3] = {0.0f, 0.0f, 0.0f};
-enum {X, Y, Z} axis;
+enum
+{
+    X,
+    Y,
+    Z
+} axis;
 camera game_camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 bool wireframe = false;
 
@@ -37,25 +42,26 @@ unsigned int renderHeight = 270;
 unsigned int windowWidth = 1600;
 unsigned int windowHeight = 900;
 
-
 void update_time()
 {
-  clock_gettime(CLOCK_REALTIME, &t1);
-  elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
-  game_time += elapsed_time;
-  printf("fps: %5u\n", (int)(1 / elapsed_time));
-  printf("time_delta: %lfms\n", elapsed_time*1000);
-  clock_gettime(CLOCK_REALTIME, &t0);
+    clock_gettime(CLOCK_REALTIME, &t1);
+    elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
+    game_time += elapsed_time;
+    printf("fps: %5u\n", (int)(1 / elapsed_time));
+    printf("time_delta: %lfms\n", elapsed_time * 1000);
+    clock_gettime(CLOCK_REALTIME, &t0);
 }
 
-void getOpenGLVersionInfo(){
+void getOpenGLVersionInfo()
+{
     printf("Vendor: %s\n", glGetString(GL_VENDOR));
     printf("Renderer: %s\n", glGetString(GL_RENDERER));
     printf("Version: %s\n", glGetString(GL_VERSION));
     printf("Shading Language: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
-void vertexSpecification() {
+void vertexSpecification()
+{
     //------------Set up primitives-------------
 
     // //------cube-------
@@ -87,11 +93,11 @@ void vertexSpecification() {
     light->uniform_loc_model = glGetUniformLocation(light->shader_program, "model_mat");
     light->uniform_loc_view = glGetUniformLocation(light->shader_program, "view_mat");
     light->uniform_loc_projection = glGetUniformLocation(light->shader_program, "projection_mat");
-
 }
 
-void createGraphicsPipeline(){
-     //Set up FBO and RBO
+void createGraphicsPipeline()
+{
+    // Set up FBO and RBO
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
@@ -105,8 +111,7 @@ void createGraphicsPipeline(){
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
 
-
-    //Create Objects, Load & compile shaders, attach and link to object program
+    // Create Objects, Load & compile shaders, attach and link to object program
     cube = object_create();
     object_attach_shaders(cube, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
     monkey = object_create();
@@ -117,8 +122,10 @@ void createGraphicsPipeline(){
     object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
 }
 
-void init() {
-    if(SDL_Init(SDL_INIT_VIDEO) < 0){
+void init()
+{
+    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    {
         fprintf(stderr, "Could not initialize SDL2!\n");
         exit(1);
     }
@@ -129,14 +136,16 @@ void init() {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-    window =  SDL_CreateWindow("OpenGL Window", 0, 0, windowWidth, windowHeight, SDL_WINDOW_OPENGL);
-    if(!window){
+    window = SDL_CreateWindow("OpenGL Window", 0, 0, windowWidth, windowHeight, SDL_WINDOW_OPENGL);
+    if (!window)
+    {
         fprintf(stderr, "Could not create SDL window!\n");
         exit(1);
     }
 
     opengl_context = SDL_GL_CreateContext(window);
-    if(!opengl_context){
+    if (!opengl_context)
+    {
         fprintf(stderr, "Could not create OpenGL context!\n");
         exit(1);
     }
@@ -145,7 +154,8 @@ void init() {
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     GLenum glew_init = glewInit();
-    if (glew_init != GLEW_OK) {
+    if (glew_init != GLEW_OK)
+    {
         error_exit("Error: %s\n", glewGetErrorString(glew_init));
     }
 
@@ -168,12 +178,15 @@ void init() {
     clock_gettime(CLOCK_REALTIME, &t0);
 }
 
-void handleInput() {
+void handleInput()
+{
     const Uint8 *keystates = SDL_GetKeyboardState(NULL);
     SDL_Event evt;
-    while(SDL_PollEvent(&evt) != 0) {
+    while (SDL_PollEvent(&evt) != 0)
+    {
         // Individual keypresses
-        if (evt.type == SDL_KEYDOWN) {
+        if (evt.type == SDL_KEYDOWN)
+        {
             int keypressed = evt.key.keysym.sym;
             if (keypressed == SDLK_ESCAPE)
             {
@@ -190,15 +203,17 @@ void handleInput() {
             // }
         }
         // Mouse movement
-        else if(evt.type == SDL_MOUSEMOTION) {
-                int dx = evt.motion.xrel;
-                int dy = evt.motion.yrel;
-                    // game_camera.theta_y += -dx * 3000 * elapsed_time;
-                camera_pitch(&game_camera, -dy * 2000 * elapsed_time);
-                camera_yaw(&game_camera, -dx * 2000 * elapsed_time);
+        else if (evt.type == SDL_MOUSEMOTION)
+        {
+            int dx = evt.motion.xrel;
+            int dy = evt.motion.yrel;
+            // game_camera.theta_y += -dx * 3000 * elapsed_time;
+            camera_pitch(&game_camera, -dy * 2000 * elapsed_time);
+            camera_yaw(&game_camera, -dx * 2000 * elapsed_time);
         }
         // Click
-        else if(evt.type == SDL_MOUSEBUTTONDOWN) {
+        else if (evt.type == SDL_MOUSEBUTTONDOWN)
+        {
             // int x = evt.motion.x;
             // int y = evt.motion.y;
             // if (evt.button.button == SDL_BUTTON_LEFT)
@@ -208,64 +223,76 @@ void handleInput() {
         }
     }
 
-     // Multiple keypresses
-    if (keystates[SDL_SCANCODE_W]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*-1.0f * 2.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*-1.0f * 2.0f * elapsed_time;
+    // Multiple keypresses
+    if (keystates[SDL_SCANCODE_W])
+    {
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * 2.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_S]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y))*1.0f * 2.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y))*1.0f * 2.0f * elapsed_time;
+    if (keystates[SDL_SCANCODE_S])
+    {
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * 2.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_A]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * 2.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*-1.0f * 2.0f * elapsed_time;
+    if (keystates[SDL_SCANCODE_A])
+    {
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * 2.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_D]){
-       game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * 2.0f * elapsed_time;
-       game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI/2)*1.0f * 2.0f * elapsed_time;
+    if (keystates[SDL_SCANCODE_D])
+    {
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * 2.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_R]){
-       game_camera.y += 3.0f * elapsed_time;
+    if (keystates[SDL_SCANCODE_R])
+    {
+        game_camera.y += 3.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_F]){
-       game_camera.y -= 3.0f * elapsed_time;
+    if (keystates[SDL_SCANCODE_F])
+    {
+        game_camera.y -= 3.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_Q]){
+    if (keystates[SDL_SCANCODE_Q])
+    {
         camera_yaw(&game_camera, 40.0f * elapsed_time);
     }
-    if (keystates[SDL_SCANCODE_E]){
-       camera_yaw(&game_camera, -40.0f * elapsed_time);
+    if (keystates[SDL_SCANCODE_E])
+    {
+        camera_yaw(&game_camera, -40.0f * elapsed_time);
     }
-    if (keystates[SDL_SCANCODE_T]){
-       camera_pitch(&game_camera, 70.0f * elapsed_time);
+    if (keystates[SDL_SCANCODE_T])
+    {
+        camera_pitch(&game_camera, 70.0f * elapsed_time);
     }
-    if (keystates[SDL_SCANCODE_G]){
-       camera_pitch(&game_camera, -70.0f * elapsed_time);
+    if (keystates[SDL_SCANCODE_G])
+    {
+        camera_pitch(&game_camera, -70.0f * elapsed_time);
     }
 
     // printf("x:%2.2f y:%2.2f z:%2.2f yaw:%2.2f pitch:%2.2f\n",
     // game_camera.x, game_camera.y, game_camera.z, game_camera.theta_y ,game_camera.theta_x);
 }
 
-void preDraw() {
+void preDraw()
+{
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, renderWidth, renderHeight);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    theta[Z] += 51.0*elapsed_time;
+    theta[Z] += 51.0 * elapsed_time;
     theta[Z] = theta[Z] > 360.0f ? theta[Z] - 360.0f : theta[Z];
-    theta[Y] += 7.0*elapsed_time;
+    theta[Y] += 7.0 * elapsed_time;
     theta[Y] = theta[Y] > 360.0f ? theta[Y] - 360.0f : theta[Y];
-    theta[X] += 23.0*elapsed_time;
+    theta[X] += 23.0 * elapsed_time;
     theta[X] = theta[X] > 360.0f ? theta[X] - 360.0f : theta[X];
-    if(wireframe)
+    if (wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
-void draw() {
+void draw()
+{
     mat4 model, view, projection;
 
     // mat4 rz = transform_rotate_z(theta[Z]);
@@ -277,15 +304,15 @@ void draw() {
     // model = mat4_mul(model, ry);
     // model = mat4_mul(model, rz);
 
-    light->pos.v[0] = sin(game_time)*5.0;
-    light->pos.v[1] = sin(game_time*0.3)*3.0;
-    light->pos.v[2] = sin(game_time*0.7)*6.0;
+    light->pos.v[0] = sin(game_time) * 5.0;
+    light->pos.v[1] = sin(game_time * 0.3) * 3.0;
+    light->pos.v[2] = sin(game_time * 0.7) * 6.0;
 
     view = camera_view_mat(&game_camera, *cube);
 
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
-    projection = camera_perspective(2.2f, 16.0f/9.0f, 0.01, 1000.0);
+    projection = camera_perspective(2.2f, 16.0f / 9.0f, 0.01, 1000.0);
 
     object_use(cube);
     glUniformMatrix4fv(cube->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
@@ -327,14 +354,17 @@ void draw() {
     // vec3_print(light->pos);
 }
 
-void postDraw() {
+void postDraw()
+{
     glViewport(0, 0, windowWidth, windowHeight);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBlitFramebuffer(0, 0, renderWidth, renderHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
-void mainLoop() {
-    while(!quit){
+void mainLoop()
+{
+    while (!quit)
+    {
         handleInput();
 
         update_time();
@@ -346,12 +376,12 @@ void mainLoop() {
         postDraw();
 
         SDL_GL_SwapWindow(window);
-
     }
     printf("Program exit! Terminating application\n");
 }
 
-void terminate() {
+void terminate()
+{
     object_free(cube);
     object_free(monkey);
     object_free(room);
@@ -360,7 +390,8 @@ void terminate() {
     SDL_Quit();
 }
 
-int main() {
+int main()
+{
 
     init();
 
