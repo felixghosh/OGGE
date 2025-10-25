@@ -42,6 +42,9 @@ unsigned int renderHeight = 270;
 unsigned int windowWidth = 1600;
 unsigned int windowHeight = 900;
 
+SDL_GameController* controller_0;
+SDL_Joystick* controller_0_joy;
+
 void update_time()
 {
     clock_gettime(CLOCK_REALTIME, &t1);
@@ -124,7 +127,7 @@ void vertexSpecification()
 
 void init()
 {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0)
     {
         fprintf(stderr, "Could not initialize SDL2!\n");
         exit(1);
@@ -135,6 +138,8 @@ void init()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+    SDL_GameControllerEventState(SDL_ENABLE);
 
     window = SDL_CreateWindow("OpenGL Window", 0, 0, windowWidth, windowHeight, SDL_WINDOW_OPENGL);
     if (!window)
@@ -176,6 +181,19 @@ void init()
     createGraphicsPipeline();
     vertexSpecification();
     clock_gettime(CLOCK_REALTIME, &t0);
+
+    int n = SDL_NumJoysticks();
+    printf("Number of joysticks: %d\n", n);
+    for (int i = 0; i < n; i++) {
+    if (SDL_IsGameController(i)) {
+        SDL_GameController *controller = SDL_GameControllerOpen(i);
+        if (controller) {
+            printf("Controller %d opened: %s\n", i, SDL_GameControllerName(controller));
+            controller_0 = SDL_GameControllerOpen(0); // open controller 0
+            controller_0_joy = SDL_JoystickOpen(0); // open the joysticks of controller 0 
+        }
+    }
+}
 }
 
 void handleInput()
@@ -214,8 +232,6 @@ void handleInput()
         // Click
         else if (evt.type == SDL_MOUSEBUTTONDOWN)
         {
-            // int x = evt.motion.x;
-            // int y = evt.motion.y;
             // if (evt.button.button == SDL_BUTTON_LEFT)
             // {
 
@@ -269,6 +285,33 @@ void handleInput()
         camera_pitch(&game_camera, -70.0f * elapsed_time);
     }
 
+    //controller
+    Sint16 left_joy_x = SDL_JoystickGetAxis(controller_0_joy, 0); // get axis 0 (left stick X)
+    Sint16 left_joy_y = SDL_JoystickGetAxis(controller_0_joy, 1); // get axis 1 (left stick Y)
+    Sint16 right_joy_x = SDL_JoystickGetAxis(controller_0_joy, 2); // get axis 2 (right stick X)
+    Sint16 right_joy_y = SDL_JoystickGetAxis(controller_0_joy, 3); // get axis 3 (right stick Y)
+    if(abs(left_joy_x) > 2000) {
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * left_joy_x/2000.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * left_joy_x/2000.0f * elapsed_time;
+    }
+    if(abs(left_joy_y) > 2000) {
+        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * left_joy_y/2000.0f * elapsed_time;
+        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * left_joy_y/2000.0f * elapsed_time;
+    }
+    if(abs(right_joy_x) > 2000) {
+        camera_yaw(&game_camera, -right_joy_x/200.0f * elapsed_time);
+    }
+    if(abs(right_joy_y) > 2000) {
+        camera_pitch(&game_camera, -right_joy_y/200.0f * elapsed_time);
+    }
+    if (SDL_GameControllerGetButton(controller_0, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)) {
+        game_camera.y += 6.0f * elapsed_time;
+    }
+    Sint16 r2 = SDL_GameControllerGetAxis(controller_0, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+    if(r2 > 2000) {
+        game_camera.y -= 6.0f * elapsed_time;
+    }
+
     // printf("x:%2.2f y:%2.2f z:%2.2f yaw:%2.2f pitch:%2.2f\n",
     // game_camera.x, game_camera.y, game_camera.z, game_camera.theta_y ,game_camera.theta_x);
 }
@@ -312,7 +355,7 @@ void draw()
 
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
-    projection = camera_perspective(2.2f, 16.0f / 9.0f, 0.01, 1000.0);
+    projection = camera_perspective(2.2f, 1.57f, 0.01, 1000.0);
 
     object_use(cube);
     glUniformMatrix4fv(cube->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
