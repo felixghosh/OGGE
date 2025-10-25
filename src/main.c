@@ -197,14 +197,12 @@ void init()
 }
 
 void handleInput()
-{
+{   
     const Uint8 *keystates = SDL_GetKeyboardState(NULL);
     SDL_Event evt;
-    while (SDL_PollEvent(&evt) != 0)
-    {
+    while (SDL_PollEvent(&evt) != 0) {
         // Individual keypresses
-        if (evt.type == SDL_KEYDOWN)
-        {
+        if (evt.type == SDL_KEYDOWN) {
             int keypressed = evt.key.keysym.sym;
             if (keypressed == SDLK_ESCAPE)
             {
@@ -221,17 +219,15 @@ void handleInput()
             // }
         }
         // Mouse movement
-        else if (evt.type == SDL_MOUSEMOTION)
-        {
-            int dx = evt.motion.xrel;
-            int dy = evt.motion.yrel;
-            // game_camera.theta_y += -dx * 3000 * elapsed_time;
-            camera_pitch(&game_camera, -dy * 2000 * elapsed_time);
-            camera_yaw(&game_camera, -dx * 2000 * elapsed_time);
+        else if (evt.type == SDL_MOUSEMOTION) {
+            Sint32 dx_mouse = evt.motion.xrel;
+            Sint32 dy_mouse = evt.motion.yrel;
+            //Mouse event polling seems to be independent of framerate. Avoid using elapsed time in calculation to get smooth camera movement
+            camera_pitch(&game_camera, -dy_mouse * 0.1f);
+            camera_yaw(&game_camera, -dx_mouse * 0.1f);
         }
         // Click
-        else if (evt.type == SDL_MOUSEBUTTONDOWN)
-        {
+        else if (evt.type == SDL_MOUSEBUTTONDOWN) {
             // if (evt.button.button == SDL_BUTTON_LEFT)
             // {
 
@@ -240,48 +236,38 @@ void handleInput()
     }
 
     // Multiple keypresses
-    if (keystates[SDL_SCANCODE_W])
-    {
+    if (keystates[SDL_SCANCODE_W]) {
         game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * 2.0f * elapsed_time;
         game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_S])
-    {
+    if (keystates[SDL_SCANCODE_S]) {
         game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * 2.0f * elapsed_time;
         game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_A])
-    {
+    if (keystates[SDL_SCANCODE_A]) {
         game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * 2.0f * elapsed_time;
         game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_D])
-    {
+    if (keystates[SDL_SCANCODE_D]) {
         game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * 2.0f * elapsed_time;
         game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * 2.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_R])
-    {
+    if (keystates[SDL_SCANCODE_R]) {
         game_camera.y += 3.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_F])
-    {
+    if (keystates[SDL_SCANCODE_F]) {
         game_camera.y -= 3.0f * elapsed_time;
     }
-    if (keystates[SDL_SCANCODE_Q])
-    {
+    if (keystates[SDL_SCANCODE_Q]) {
         camera_yaw(&game_camera, 40.0f * elapsed_time);
     }
-    if (keystates[SDL_SCANCODE_E])
-    {
+    if (keystates[SDL_SCANCODE_E]) {
         camera_yaw(&game_camera, -40.0f * elapsed_time);
     }
-    if (keystates[SDL_SCANCODE_T])
-    {
+    if (keystates[SDL_SCANCODE_T]) {
         camera_pitch(&game_camera, 70.0f * elapsed_time);
     }
-    if (keystates[SDL_SCANCODE_G])
-    {
+    if (keystates[SDL_SCANCODE_G]) {
         camera_pitch(&game_camera, -70.0f * elapsed_time);
     }
 
