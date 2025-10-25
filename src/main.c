@@ -60,6 +60,33 @@ void getOpenGLVersionInfo()
     printf("Shading Language: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 }
 
+void createGraphicsPipeline()
+{
+    // Set up FBO and RBO
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, renderWidth, renderHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
+
+    glGenRenderbuffers(1, &rbod);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbod);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
+
+    // Create Objects, Load & compile shaders, attach and link to object program
+    cube = object_create();
+    object_attach_shaders(cube, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
+    monkey = object_create();
+    object_attach_shaders(monkey, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
+    room = object_create();
+    object_attach_shaders(room, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
+    light = object_create();
+    object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
+}
+
 void vertexSpecification()
 {
     //------------Set up primitives-------------
@@ -93,33 +120,6 @@ void vertexSpecification()
     light->uniform_loc_model = glGetUniformLocation(light->shader_program, "model_mat");
     light->uniform_loc_view = glGetUniformLocation(light->shader_program, "view_mat");
     light->uniform_loc_projection = glGetUniformLocation(light->shader_program, "projection_mat");
-}
-
-void createGraphicsPipeline()
-{
-    // Set up FBO and RBO
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, renderWidth, renderHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, rbo);
-
-    glGenRenderbuffers(1, &rbod);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbod);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
-
-    // Create Objects, Load & compile shaders, attach and link to object program
-    cube = object_create();
-    object_attach_shaders(cube, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
-    monkey = object_create();
-    object_attach_shaders(monkey, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
-    room = object_create();
-    object_attach_shaders(room, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
-    light = object_create();
-    object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
 }
 
 void init()
