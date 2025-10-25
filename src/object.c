@@ -150,6 +150,8 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     //     vec2_print(obj_tex_coords[i]);
     // }
 
+    //TODO: You might consider rewriting the buffer layout above to let all vertex attribute reside in one contiguous region instead of one region per attribute
+    //Using this kind of interleaved layout would probably lead to fewer memory accesses when the GPU is fethcing vertex attributes :)
     object_gen_buffers(obj);
 
     GLsizeiptr vertices_size = 3*num_indices*4*sizeof(GLfloat);
@@ -163,31 +165,39 @@ void object_load_obj(object *obj, const char *obj_filepath, const char *tex_file
     glNamedBufferSubData(obj->vbo, vertices_size, colors_size, obj_colors);
     glNamedBufferSubData(obj->vbo, vertices_size+colors_size, normals_size, obj_normals);
     glNamedBufferSubData(obj->vbo, vertices_size+colors_size+normals_size, tex_coords_size, obj_tex_coords);
-    // glNamedBufferStorage(obj->ebo num_indices*3*sizeof(GLuint), obj_indices, 0/*GL_DYNAMIC_STORAGE_BIT*/ );  //allocate and initialize element buffer object
+    // glNamedBufferStorage(obj->ebo num_indices*3*sizeof(GLuint), obj_indices, 0/*GL_DYNAMIC_STORAGE_BIT*/);  //allocate and initialize element buffer object
 
     //Attribute 0 - vertex position
-    glVertexArrayVertexBuffer(obj->vao, 0, obj->vbo, 0, 4 * sizeof(GL_FLOAT));
-    glVertexArrayAttribFormat(obj->vao, 0, 4, GL_FLOAT, GL_FALSE, 0);
-    glEnableVertexArrayAttrib(obj->vao, 0);
-    glVertexArrayAttribBinding(obj->vao, 0, 0);
+    GLint vertex_pos_attrib_index = glGetAttribLocation(obj->shader_program, "vPos");
+    GLuint vertex_pos_binding_index = vertex_pos_attrib_index;
+    glVertexArrayVertexBuffer(obj->vao, vertex_pos_binding_index, obj->vbo, 0, 4 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, vertex_pos_attrib_index, 4, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, vertex_pos_attrib_index);
+    glVertexArrayAttribBinding(obj->vao, vertex_pos_attrib_index, vertex_pos_binding_index);
 
     //Atribute 1 - vertex color
-    glVertexArrayVertexBuffer(obj->vao, 1, obj->vbo, vertices_size, 4 * sizeof(GL_FLOAT));
-    glVertexArrayAttribFormat(obj->vao, 1, 4, GL_FLOAT, GL_FALSE, 0);
-    glEnableVertexArrayAttrib(obj->vao, 1);
-    glVertexArrayAttribBinding(obj->vao, 1, 1);
+    GLint vertex_color_attrib_index = glGetAttribLocation(obj->shader_program, "vColor");
+    GLuint vertex_color_binding_index = vertex_color_attrib_index;
+    glVertexArrayVertexBuffer(obj->vao, vertex_color_binding_index, obj->vbo, vertices_size, 4 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, vertex_color_attrib_index, 4, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, vertex_color_attrib_index);
+    glVertexArrayAttribBinding(obj->vao, vertex_color_attrib_index, vertex_color_binding_index);
 
     //Atribute 2 - vertex normal
-    glVertexArrayVertexBuffer(obj->vao, 2, obj->vbo, (vertices_size+colors_size), 3 * sizeof(GL_FLOAT));
-    glVertexArrayAttribFormat(obj->vao, 2, 3, GL_FLOAT, GL_FALSE, 0);
-    glEnableVertexArrayAttrib(obj->vao, 2);
-    glVertexArrayAttribBinding(obj->vao, 2, 2);
+    GLint vertex_normal_attrib_index = glGetAttribLocation(obj->shader_program, "vNormal");
+    GLuint vertex_normal_binding_index = vertex_normal_attrib_index;
+    glVertexArrayVertexBuffer(obj->vao, vertex_normal_binding_index, obj->vbo, (vertices_size+colors_size), 3 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, vertex_normal_attrib_index, 3, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, vertex_normal_attrib_index);
+    glVertexArrayAttribBinding(obj->vao, vertex_normal_attrib_index, vertex_normal_binding_index);
 
-    //Atribute 3 - vertex normal
-    glVertexArrayVertexBuffer(obj->vao, 3, obj->vbo, (vertices_size+colors_size+normals_size), 2 * sizeof(GL_FLOAT));
-    glVertexArrayAttribFormat(obj->vao, 3, 2, GL_FLOAT, GL_FALSE, 0);
-    glEnableVertexArrayAttrib(obj->vao, 3);
-    glVertexArrayAttribBinding(obj->vao, 3, 3);
+    //Atribute 3 - texture coordinates
+    GLint vertex_texcoord_attrib_index = glGetAttribLocation(obj->shader_program, "vTexCoord");
+    GLuint vertex_texcoord_binding_index = vertex_texcoord_attrib_index;
+    glVertexArrayVertexBuffer(obj->vao, vertex_texcoord_binding_index, obj->vbo, (vertices_size+colors_size+normals_size), 2 * sizeof(GL_FLOAT));
+    glVertexArrayAttribFormat(obj->vao, vertex_texcoord_attrib_index, 2, GL_FLOAT, GL_FALSE, 0);
+    glEnableVertexArrayAttrib(obj->vao, vertex_texcoord_attrib_index);
+    glVertexArrayAttribBinding(obj->vao, vertex_texcoord_attrib_index, vertex_texcoord_binding_index);
 
     checked_free(vertices);
     checked_free(obj_vertices);
