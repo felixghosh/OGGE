@@ -102,6 +102,7 @@ typedef struct mat4{
 mat4 mat4_add       (mat4 a,  mat4 b);
 mat4 mat4_sub       (mat4 a,  mat4 b);
 mat4 mat4_mul       (mat4 a,  mat4 b);
+mat4 mat4_mul3      (mat4 a,  mat4 b, mat4 c);
 mat4 mat4_add_scalar(mat4 a, float b);
 mat4 mat4_sub_scalar(mat4 a, float b);
 mat4 mat4_mul_scalar(mat4 a, float b);

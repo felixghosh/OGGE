@@ -12,6 +12,10 @@ mat4 mat4_mul(mat4 a, mat4 b){
     return res;
 }
 
+mat4 mat4_mul3 (mat4 a,  mat4 b, mat4 c) {
+    return mat4_mul(a, mat4_mul(b, c));
+}
+
 mat4 mat4_transpose(mat4 a){
     mat4 res = {{
         {a.m[0][0],a.m[1][0],a.m[2][0],a.m[3][0]},
