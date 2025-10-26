@@ -258,7 +258,6 @@ void object_render(object *obj) {
 
 void object_use(object *obj) {
     glUseProgram(obj->shader_program);
-    // glBindVertexArray(obj->vao);
 }
 
 void object_gen_buffers(object *obj) {

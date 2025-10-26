@@ -14,6 +14,8 @@
 #include "transform.h"
 #include "camera.h"
 
+#include "stb_image.h"
+
 // Globals
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
@@ -24,6 +26,8 @@ GLuint rbod;
 
 object *monkey, *cube, *room, *light;
 vec3 light_pos = {{2.0, 5.0, -2.0}};
+object *skybox;
+GLuint skybox_tex;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
@@ -88,13 +92,15 @@ void createGraphicsPipeline()
     object_attach_shaders(room, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
     light = object_create();
     object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
+    skybox = object_create();
+    object_attach_shaders(skybox, "shaders/skybox_vert.glsl", "shaders/skybox_frag.glsl");
 }
 
 void vertexSpecification()
 {
     //------------Set up primitives-------------
 
-    // //------cube-------
+    // Meshes
     object_load_obj(cube, "models/cube.obj", NULL, (vec4){{1.0, 0.0, 0.0, 1.0}}, (vec3){{-1.0f, 1.0f, -2.0f}}, 1.0f);
     cube->uniform_loc_light_pos = glGetUniformLocation(cube->shader_program, "light_pos");
     cube->uniform_loc_camera_pos = glGetUniformLocation(cube->shader_program, "camera_pos");
@@ -116,8 +122,41 @@ void vertexSpecification()
     room->uniform_loc_model = glGetUniformLocation(room->shader_program, "model_mat");
     room->uniform_loc_mvp = glGetUniformLocation(room->shader_program, "mvp");
 
+    // Light
     object_load_obj(light, "models/sphere.obj", NULL, (vec4){{1.0, 0.8, 0.6, 1.0}}, (vec3){{2.0, 5.0, -2.0}}, 0.5);
     light->uniform_loc_mvp = glGetUniformLocation(light->shader_program, "mvp");
+
+    //Cube-mapped skybox
+    object_load_obj(skybox, "models/cube.obj", NULL, (vec4){{0.0, 0.0, 0.0, 0.0}}, (vec3){{0.0, 0.0, 0.0}}, 100);
+    skybox->uniform_loc_mvp = glGetUniformLocation(skybox->shader_program, "mvp");
+    glGenTextures(1, &skybox_tex);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+    char *tex_paths[6] = {
+        "textures/skybox/right.jpg",
+        "textures/skybox/left.jpg",
+        "textures/skybox/top.jpg",
+        "textures/skybox/bottom.jpg",
+        "textures/skybox/front.jpg",
+        "textures/skybox/back.jpg"
+    };
+    int width, height, nrChannels;
+    unsigned char *data;
+    stbi_set_flip_vertically_on_load(false);  
+    for(unsigned int i = 0; i < 6; i++)
+    {
+        data = stbi_load(tex_paths[i], &width, &height, &nrChannels, 0);
+        glTexImage2D(
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+        );
+        stbi_image_free(data);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    
 }
 
 void init()
@@ -170,7 +209,7 @@ void init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    printf("SDL and OpenGL initialized!\n");
+    printf("\n\n\nSDL and OpenGL initialized!\n");
     getOpenGLVersionInfo();
 
     createGraphicsPipeline();
@@ -233,26 +272,36 @@ void handleInput()
     float player_speed = 10.0;
     // Multiple keypresses
     if (keystates[SDL_SCANCODE_W]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
+        game_camera.z    += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
+        game_camera.x    += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
+        skybox->pos.v[2] += cos(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
+        skybox->pos.v[0] += sin(deg_to_rad(game_camera.theta_y)) * -1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_S]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
+        game_camera.z    += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
+        game_camera.x    += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
+        skybox->pos.v[2] += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
+        skybox->pos.v[0] += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_A]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
+        game_camera.z    += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
+        game_camera.x    += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
+        skybox->pos.v[2] += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
+        skybox->pos.v[0] += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * -1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_D]) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
+        game_camera.z    += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
+        game_camera.x    += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
+        skybox->pos.v[2] += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
+        skybox->pos.v[0] += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_R]) {
-        game_camera.y += 3.0f * elapsed_time;
+        game_camera.y    += player_speed * elapsed_time;
+        skybox->pos.v[1] += player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_F]) {
-        game_camera.y -= 3.0f * elapsed_time;
+        game_camera.y    -= player_speed * elapsed_time;
+        skybox->pos.v[1] -= player_speed * elapsed_time;
     }
     if (keystates[SDL_SCANCODE_Q]) {
         camera_yaw(&game_camera, 40.0f * elapsed_time);
@@ -273,12 +322,16 @@ void handleInput()
     Sint16 right_joy_x = SDL_JoystickGetAxis(controller_0_joy, 2); // get axis 2 (right stick X)
     Sint16 right_joy_y = SDL_JoystickGetAxis(controller_0_joy, 3); // get axis 3 (right stick Y)
     if(abs(left_joy_x) > 2000) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
+        game_camera.z    += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
+        game_camera.x    += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
+        skybox->pos.v[2] += cos(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
+        skybox->pos.v[0] += sin(deg_to_rad(game_camera.theta_y) + M_PI / 2) * 1.0f * player_speed * left_joy_x/20000.0f * elapsed_time;
     }
     if(abs(left_joy_y) > 2000) {
-        game_camera.z += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
-        game_camera.x += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
+        game_camera.z    += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
+        game_camera.x    += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
+        skybox->pos.v[2] += cos(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
+        skybox->pos.v[0] += sin(deg_to_rad(game_camera.theta_y)) * 1.0f * player_speed * left_joy_y/20000.0f * elapsed_time;
     }
     if(abs(right_joy_x) > 2000) {
         camera_yaw(&game_camera, -right_joy_x/200.0f * elapsed_time);
@@ -287,11 +340,13 @@ void handleInput()
         camera_pitch(&game_camera, -right_joy_y/200.0f * elapsed_time);
     }
     if (SDL_GameControllerGetButton(controller_0, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)) {
-        game_camera.y += 6.0f * elapsed_time;
+        game_camera.y    += player_speed * elapsed_time;
+        skybox->pos.v[1] += player_speed * elapsed_time;
     }
     Sint16 r2 = SDL_GameControllerGetAxis(controller_0, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
     if(r2 > 2000) {
-        game_camera.y -= 6.0f * elapsed_time;
+        game_camera.y    -= player_speed * elapsed_time;
+        skybox->pos.v[1] -= player_speed * elapsed_time;
     }
 
     // printf("x:%2.2f y:%2.2f z:%2.2f yaw:%2.2f pitch:%2.2f\n",
@@ -317,17 +372,18 @@ void preDraw()
 }
 
 void draw()
-{
+{   
+    glFrontFace(GL_CCW);
     mat4 model, view, projection, mvp;
 
-    mat4 rz = transform_rotate_z(theta[Z]);
-    mat4 ry = transform_rotate_y(theta[Y]);
-    mat4 rx = transform_rotate_x(theta[X]);
+    // mat4 rz = transform_rotate_z(theta[Z]);
+    // mat4 ry = transform_rotate_y(theta[Y]);
+    // mat4 rx = transform_rotate_x(theta[X]);
 
     model = object_model_mat(cube);
-    model = mat4_mul(model, rx);
-    model = mat4_mul(model, ry);
-    model = mat4_mul(model, rz);
+    // model = mat4_mul(model, rx);
+    // model = mat4_mul(model, ry);
+    // model = mat4_mul(model, rz);
 
     light->pos.v[0] = sin(game_time) * 5.0;
     light->pos.v[1] = sin(game_time * 0.3) * 3.0;
@@ -337,7 +393,7 @@ void draw()
 
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
-    projection = camera_perspective(2.2f, 1.57f, 0.01, 1000.0);
+    projection = camera_perspective(2.5f, 16.0f / 9.0f, 0.01, 1000.0);
 
     
     mvp = mat4_mul3(projection, view, model);
@@ -361,6 +417,16 @@ void draw()
     glUniform3fv(light->uniform_loc_light_pos, 1, (const float *)light->pos.v);
     glUniform3f(light->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
     object_render(light);
+
+    //Skybox manual handling
+    model = object_model_mat(skybox);
+    mvp = mat4_mul3(projection, view, model);
+    object_use(skybox);
+    glUniformMatrix4fv(skybox->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+    //Skybox is drawn from the inside, therefore the winding order of the triangles need to be reversed
+    glFrontFace(GL_CW);
+    object_render(skybox);
 }
 
 void postDraw()
