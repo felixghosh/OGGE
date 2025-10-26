@@ -240,16 +240,25 @@ void object_attach_shaders(object *obj, const char *vertex_shader_path, const ch
     glDeleteShader(fragment_shader);
 }
 
+void object_update_uniforms(object *obj, mat4 model, mat4 mvp, vec3 light_pos, vec3 camera_pos) {
+    object_use(obj);
+    glUniformMatrix4fv(obj->uniform_loc_model, 1, GL_TRUE, (const float *)model.m);
+    glUniformMatrix4fv(obj->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
+    glUniform3fv(obj->uniform_loc_light_pos, 1, (const float *)light_pos.v);
+    glUniform3fv(obj->uniform_loc_camera_pos, 1, (const float *)camera_pos.v);
+    glUniform1i(obj->uniform_loc_is_textured, obj->textures != NULL);
+}
+
 void object_render(object *obj) {
     glBindVertexArray(obj->vao);
+    if(obj->textures != NULL)
+        object_bind_texture(obj, 0);
     glDrawArrays(GL_TRIANGLES, 0, obj->num_vertices);
 }
 
 void object_use(object *obj) {
     glUseProgram(obj->shader_program);
-    glBindVertexArray(obj->vao);
-    if(obj->textures != NULL)
-        object_bind_texture(obj, 0);
+    // glBindVertexArray(obj->vao);
 }
 
 void object_gen_buffers(object *obj) {

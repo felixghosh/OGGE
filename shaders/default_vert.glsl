@@ -10,13 +10,11 @@ out vec3 world_pos;
 out vec2 tex_coord;
 
 uniform mat4 model_mat;
-uniform mat4 view_mat;
-uniform mat4 projection_mat;
+uniform mat4 mvp;
 
 
 void main()
 {
-    mat4 mvp = projection_mat * view_mat * model_mat;
     gl_Position = mvp*vPos;
 
     color = vColor;
