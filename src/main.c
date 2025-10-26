@@ -461,6 +461,7 @@ void terminate()
     object_free(monkey);
     object_free(room);
     object_free(light);
+    object_free(skybox);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
