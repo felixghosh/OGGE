@@ -16,6 +16,9 @@
 
 #include "stb_image.h"
 
+//Constants
+#define SKYBOX_TEXTURE_UNIT 0
+
 // Globals
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
@@ -129,7 +132,8 @@ void vertexSpecification()
     //Cube-mapped skybox
     object_load_obj(skybox, "models/cube.obj", NULL, (vec4){{0.0, 0.0, 0.0, 0.0}}, (vec3){{0.0, 0.0, 0.0}}, 100);
     skybox->uniform_loc_mvp = glGetUniformLocation(skybox->shader_program, "mvp");
-    glGenTextures(1, &skybox_tex);
+    glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &skybox_tex);
+    glTextureStorage2D(skybox_tex, 1, GL_RGBA8, 2048, 2048);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
     char *tex_paths[6] = {
         "textures/skybox/right.jpg",
@@ -145,17 +149,25 @@ void vertexSpecification()
     for(unsigned int i = 0; i < 6; i++)
     {
         data = stbi_load(tex_paths[i], &width, &height, &nrChannels, 0);
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-            0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+        GLenum format = (nrChannels == 3) ? GL_RGB : GL_RGBA;
+        glTextureSubImage3D(
+            skybox_tex,
+            0,                // mip level
+            0, 0, i,          // x, y, z offset (z = face index)
+            width, height, 1, // size (depth = 1)
+            format,          // format of source data
+            GL_UNSIGNED_BYTE, // type of source data
+            data      // pointer to pixel data
         );
         stbi_image_free(data);
     }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(skybox_tex, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(skybox_tex, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(skybox_tex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(skybox_tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(skybox_tex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    object_use(skybox);
+    glUniform1i(glGetUniformLocation(skybox->shader_program, "skybox"), SKYBOX_TEXTURE_UNIT);
     
 }
 
@@ -357,7 +369,7 @@ void preDraw()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, renderWidth, renderHeight);
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClearColor(255.0/255.0, 246.0/255.0, 199.0/255.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     theta[Z] += 51.0 * elapsed_time;
     theta[Z] = theta[Z] > 360.0f ? theta[Z] - 360.0f : theta[Z];
@@ -423,7 +435,7 @@ void draw()
     mvp = mat4_mul3(projection, view, model);
     object_use(skybox);
     glUniformMatrix4fv(skybox->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
+    glBindTextureUnit(SKYBOX_TEXTURE_UNIT, skybox_tex);
     //Skybox is drawn from the inside, therefore the winding order of the triangles need to be reversed
     glFrontFace(GL_CW);
     object_render(skybox);
