@@ -250,6 +250,7 @@ void object_update_uniforms(object *obj, mat4 model, mat4 mvp, vec3 light_pos, v
 }
 
 void object_render(object *obj) {
+    object_use(obj);
     glBindVertexArray(obj->vao);
     if(obj->textures != NULL)
         object_bind_texture(obj, 0);

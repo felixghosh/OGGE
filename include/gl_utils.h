@@ -5,6 +5,11 @@
 
 enum shadertype {VERTEX, FRAGMENT};
 
+//Constants
+#define SKYBOX_TEXTURE_UNIT  0
+#define VERTEX_UBO_BINDING   0
+#define FRAGMENT_UBO_BINDING 1
+
 
 //OpenGL util functions
 GLuint load_and_compile_shader(const char* filepath, enum shadertype type);

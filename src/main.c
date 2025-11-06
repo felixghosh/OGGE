@@ -16,9 +16,6 @@
 
 #include "stb_image.h"
 
-//Constants
-#define SKYBOX_TEXTURE_UNIT 0
-
 // Globals
 SDL_Window *window = NULL;
 SDL_GLContext opengl_context = NULL;
@@ -26,6 +23,16 @@ bool quit = false;
 GLuint fbo;
 GLuint rbo;
 GLuint rbod;
+GLuint frag_ubo, vert_ubo;
+typedef struct frag_ubo_data {
+    vec3 light_pos;  float align_a;
+    vec3 camera_pos; float align_b;
+} frag_ubo_data;
+typedef struct vert_ubo_data {
+    mat4 model_mat;
+    mat4 mvp;
+    int is_textured;
+} vert_ubo_data;
 
 object *monkey, *cube, *room, *light;
 vec3 light_pos = {{2.0, 5.0, -2.0}};
@@ -86,50 +93,44 @@ void createGraphicsPipeline()
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, renderWidth, renderHeight);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbod);
 
-    // Create Objects, Load & compile shaders, attach and link to object program
-    cube = object_create();
-    object_attach_shaders(cube, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
-    monkey = object_create();
-    object_attach_shaders(monkey, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
-    room = object_create();
-    object_attach_shaders(room, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
-    light = object_create();
-    object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
-    skybox = object_create();
-    object_attach_shaders(skybox, "shaders/skybox_vert.glsl", "shaders/skybox_frag.glsl");
+    //Set up UBOs for vertex and fragment shaders
+    glCreateBuffers(1, &frag_ubo);
+    glNamedBufferStorage(frag_ubo, sizeof(frag_ubo_data), NULL, GL_DYNAMIC_STORAGE_BIT);
+    glBindBufferBase(GL_UNIFORM_BUFFER, FRAGMENT_UBO_BINDING, frag_ubo);
+
+    glCreateBuffers(1, &vert_ubo);
+    glNamedBufferStorage(vert_ubo, sizeof(vert_ubo_data), NULL, GL_DYNAMIC_STORAGE_BIT);
+    glBindBufferBase(GL_UNIFORM_BUFFER, VERTEX_UBO_BINDING, vert_ubo);
+
 }
 
-void vertexSpecification()
+void objectSpecification()
 {
     //------------Set up primitives-------------
 
-    // Meshes
+    // Create Objects. Load & compile shaders, attach and link to object program. Finally load OBJ-data from file and set up buffers and attributes
+    cube = object_create();
+    object_attach_shaders(cube, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
     object_load_obj(cube, "models/cube.obj", NULL, (vec4){{1.0, 0.0, 0.0, 1.0}}, (vec3){{-1.0f, 1.0f, -2.0f}}, 1.0f);
-    cube->uniform_loc_light_pos = glGetUniformLocation(cube->shader_program, "light_pos");
-    cube->uniform_loc_camera_pos = glGetUniformLocation(cube->shader_program, "camera_pos");
-    cube->uniform_loc_is_textured = glGetUniformLocation(cube->shader_program, "is_textured");
-    cube->uniform_loc_model = glGetUniformLocation(cube->shader_program, "model_mat");
-    cube->uniform_loc_mvp = glGetUniformLocation(cube->shader_program, "mvp");
 
+    monkey = object_create();
+    object_attach_shaders(monkey, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
     object_load_obj(monkey, "models/monkey.obj", "textures/fur.jpg", (vec4){{0.0, 1.0, 0.0, 1.0}}, (vec3){{2.0f, 2.0f, -3.0f}}, 2.0f);
-    monkey->uniform_loc_light_pos = glGetUniformLocation(monkey->shader_program, "light_pos");
-    monkey->uniform_loc_camera_pos = glGetUniformLocation(monkey->shader_program, "camera_pos");
-    monkey->uniform_loc_is_textured = glGetUniformLocation(monkey->shader_program, "is_textured");
-    monkey->uniform_loc_model = glGetUniformLocation(monkey->shader_program, "model_mat");
-    monkey->uniform_loc_mvp = glGetUniformLocation(monkey->shader_program, "mvp");
 
+    room = object_create();
+    object_attach_shaders(room, "shaders/default_vert.glsl", "shaders/default_frag.glsl");
     object_load_obj(room, "models/room.obj", "textures/container.jpg", (vec4){{0.0, 0.0, 1.0, 1.0}}, (vec3){{0.0f, -1.0f, 0.0f}}, 10.0f);
-    room->uniform_loc_light_pos = glGetUniformLocation(room->shader_program, "light_pos");
-    room->uniform_loc_camera_pos = glGetUniformLocation(room->shader_program, "camera_pos");
-    room->uniform_loc_is_textured = glGetUniformLocation(room->shader_program, "is_textured");
-    room->uniform_loc_model = glGetUniformLocation(room->shader_program, "model_mat");
-    room->uniform_loc_mvp = glGetUniformLocation(room->shader_program, "mvp");
 
-    // Light
+    //lights
+    light = object_create();
+    object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
     object_load_obj(light, "models/sphere.obj", NULL, (vec4){{1.0, 0.8, 0.6, 1.0}}, (vec3){{2.0, 5.0, -2.0}}, 0.5);
     light->uniform_loc_mvp = glGetUniformLocation(light->shader_program, "mvp");
 
     //Cube-mapped skybox
+    skybox = object_create();
+    object_attach_shaders(skybox, "shaders/skybox_vert.glsl", "shaders/skybox_frag.glsl");
+
     object_load_obj(skybox, "models/cube.obj", NULL, (vec4){{0.0, 0.0, 0.0, 0.0}}, (vec3){{0.0, 0.0, 0.0}}, 100);
     skybox->uniform_loc_mvp = glGetUniformLocation(skybox->shader_program, "mvp");
     glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &skybox_tex);
@@ -167,8 +168,7 @@ void vertexSpecification()
     glTextureParameteri(skybox_tex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTextureParameteri(skybox_tex, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     object_use(skybox);
-    glUniform1i(glGetUniformLocation(skybox->shader_program, "skybox"), SKYBOX_TEXTURE_UNIT);
-    
+    glUniform1i(glGetUniformLocation(skybox->shader_program, "skybox"), SKYBOX_TEXTURE_UNIT); 
 }
 
 void init()
@@ -225,7 +225,7 @@ void init()
     getOpenGLVersionInfo();
 
     createGraphicsPipeline();
-    vertexSpecification();
+    objectSpecification();
     clock_gettime(CLOCK_REALTIME, &t0);
 
     int n = SDL_NumJoysticks();
@@ -369,7 +369,7 @@ void preDraw()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, renderWidth, renderHeight);
-    glClearColor(255.0/255.0, 246.0/255.0, 199.0/255.0, 1.0);
+    glClearColor(0.0/255.0, 0.0/255.0, 0.0/255.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     theta[Z] += 51.0 * elapsed_time;
     theta[Z] = theta[Z] > 360.0f ? theta[Z] - 360.0f : theta[Z];
@@ -383,54 +383,61 @@ void preDraw()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
+void update_vertex_ubo_data(vert_ubo_data *v_data, object *obj, mat4 view, mat4 projection) {
+    mat4 model, mvp;
+    model = object_model_mat(obj);
+    mvp = mat4_mul3(projection, view, model);
+
+    v_data->model_mat = mat4_transpose(model);
+    v_data->mvp = mat4_transpose(mvp);
+    v_data->is_textured = (obj->textures != NULL);
+
+    glNamedBufferSubData(vert_ubo, 0, sizeof(vert_ubo_data), v_data);
+}
+
 void draw()
 {   
     glFrontFace(GL_CCW);
-    mat4 model, view, projection, mvp;
 
-    // mat4 rz = transform_rotate_z(theta[Z]);
-    // mat4 ry = transform_rotate_y(theta[Y]);
-    // mat4 rx = transform_rotate_x(theta[X]);
-
-    model = object_model_mat(cube);
-    // model = mat4_mul(model, rx);
-    // model = mat4_mul(model, ry);
-    // model = mat4_mul(model, rz);
-
+    //----------Per frame fragment data----------
     light->pos.v[0] = sin(game_time) * 5.0;
     light->pos.v[1] = sin(game_time * 0.3) * 3.0;
     light->pos.v[2] = sin(game_time * 0.7) * 6.0;
 
-    view = camera_view_mat(&game_camera, *cube);
+    frag_ubo_data f_data;
+    f_data.camera_pos = (vec3){{game_camera.x, game_camera.y, game_camera.z}};
+    f_data.light_pos = light->pos;
 
+    glNamedBufferSubData(frag_ubo, 0, sizeof(frag_ubo_data), &f_data);
+
+
+    //----------Per model vertex data----------
+    vert_ubo_data v_data;
+    mat4 model, view, projection, mvp;
+
+    view = camera_view_mat(&game_camera, *cube);
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
     projection = camera_perspective(2.5f, 16.0f / 9.0f, 0.01, 1000.0);
 
-    
-    mvp = mat4_mul3(projection, view, model);
-    object_update_uniforms(cube, model, mvp, light->pos, (vec3){{game_camera.x, game_camera.y, game_camera.z}});
+    update_vertex_ubo_data(&v_data, cube, view, projection);
     object_render(cube);
 
-    model = object_model_mat(monkey);
-    mvp = mat4_mul3(projection, view, model);
-    object_update_uniforms(monkey, model, mvp, light->pos, (vec3){{game_camera.x, game_camera.y, game_camera.z}});
+    update_vertex_ubo_data(&v_data, monkey, view, projection);
     object_render(monkey);
 
-    model = object_model_mat(room);
-    mvp = mat4_mul3(projection, view, model);
-    object_update_uniforms(room, model, mvp, light->pos, (vec3){{game_camera.x, game_camera.y, game_camera.z}});
+    update_vertex_ubo_data(&v_data, room, view, projection);
     object_render(room);
 
-    model = object_model_mat(light);
-    mvp = mat4_mul3(projection, view, model);
-    object_use(light);
-    glUniformMatrix4fv(light->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
-    glUniform3fv(light->uniform_loc_light_pos, 1, (const float *)light->pos.v);
-    glUniform3f(light->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
-    object_render(light);
+    // model = object_model_mat(light);
+    // mvp = mat4_mul3(projection, view, model);
+    // object_use(light);
+    // glUniformMatrix4fv(light->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
+    // glUniform3fv(light->uniform_loc_light_pos, 1, (const float *)light->pos.v);
+    // glUniform3f(light->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
+    // object_render(light);
 
-    //Skybox manual handling
+    // //Skybox manual handling
     model = object_model_mat(skybox);
     mvp = mat4_mul3(projection, view, model);
     object_use(skybox);
@@ -438,7 +445,7 @@ void draw()
     glBindTextureUnit(SKYBOX_TEXTURE_UNIT, skybox_tex);
     //Skybox is drawn from the inside, therefore the winding order of the triangles need to be reversed
     glFrontFace(GL_CW);
-    object_render(skybox);
+    // object_render(skybox);
 }
 
 void postDraw()

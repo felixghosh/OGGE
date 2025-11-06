@@ -4,13 +4,17 @@ in vec4 color;
 in vec3 normal;
 in vec3 world_pos;
 in vec2 tex_coord;
+flat in int is_textured;  //No interpolation for this attribute
 
 out vec4 FragColor;
 
-uniform vec3 light_pos;
-uniform vec3 camera_pos;
 uniform sampler2D ourTexture;
-uniform int is_textured;
+
+
+layout(std140, binding = 1) uniform frag_data {
+    vec3 light_pos;
+    vec3 camera_pos;
+};
 
 
 void main()
