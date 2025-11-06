@@ -41,44 +41,28 @@ GLuint skybox_tex;
 double elapsed_time;
 double game_time;
 struct timespec t0, t1;
-float theta[3] = {0.0f, 0.0f, 0.0f};
-enum
-{
-    X,
-    Y,
-    Z
-} axis;
 camera game_camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 bool wireframe = false;
+
+SDL_GameController* controller_0;
+SDL_Joystick* controller_0_joy;
 
 unsigned int renderWidth = 480;
 unsigned int renderHeight = 270;
 unsigned int windowWidth = 1600;
 unsigned int windowHeight = 900;
 
-SDL_GameController* controller_0;
-SDL_Joystick* controller_0_joy;
 
-void update_time()
-{
+void update_time() {
     clock_gettime(CLOCK_REALTIME, &t1);
     elapsed_time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1000000000.0;
     game_time += elapsed_time;
-    // printf("fps: %5u\n", (int)(1 / elapsed_time));
-    // printf("time_delta: %lfms\n", elapsed_time * 1000);
+    printf("fps: %5u\n", (int)(1 / elapsed_time));
+    printf("time_delta: %lfms\n", elapsed_time * 1000);
     clock_gettime(CLOCK_REALTIME, &t0);
 }
 
-void getOpenGLVersionInfo()
-{
-    printf("Vendor: %s\n", glGetString(GL_VENDOR));
-    printf("Renderer: %s\n", glGetString(GL_RENDERER));
-    printf("Version: %s\n", glGetString(GL_VERSION));
-    printf("Shading Language: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-}
-
-void createGraphicsPipeline()
-{
+void createGraphicsPipeline() {
     // Set up FBO and RBO
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -104,8 +88,7 @@ void createGraphicsPipeline()
 
 }
 
-void objectSpecification()
-{
+void objectSpecification() {
     //------------Set up primitives-------------
 
     // Create Objects. Load & compile shaders, attach and link to object program. Finally load OBJ-data from file and set up buffers and attributes
@@ -169,8 +152,7 @@ void objectSpecification()
     glUniform1i(glGetUniformLocation(skybox->shader_program, "skybox"), SKYBOX_TEXTURE_UNIT); 
 }
 
-void init()
-{
+void init() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0)
     {
         fprintf(stderr, "Could not initialize SDL2!\n");
@@ -220,7 +202,10 @@ void init()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     printf("\n\n\nSDL and OpenGL initialized!\n");
-    getOpenGLVersionInfo();
+    printf("Vendor: %s\n", glGetString(GL_VENDOR));
+    printf("Renderer: %s\n", glGetString(GL_RENDERER));
+    printf("Version: %s\n", glGetString(GL_VERSION));
+    printf("Shading Language: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     createGraphicsPipeline();
     objectSpecification();
@@ -240,8 +225,7 @@ void init()
 }
 }
 
-void handleInput()
-{   
+void handleInput() {   
     const Uint8 *keystates = SDL_GetKeyboardState(NULL);
     SDL_Event evt;
     while (SDL_PollEvent(&evt) != 0) {
@@ -363,18 +347,11 @@ void handleInput()
     // game_camera.x, game_camera.y, game_camera.z, game_camera.theta_y ,game_camera.theta_x);
 }
 
-void preDraw()
-{
+void preDraw() {
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glViewport(0, 0, renderWidth, renderHeight);
     glClearColor(0.0/255.0, 0.0/255.0, 0.0/255.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    theta[Z] += 51.0 * elapsed_time;
-    theta[Z] = theta[Z] > 360.0f ? theta[Z] - 360.0f : theta[Z];
-    theta[Y] += 7.0 * elapsed_time;
-    theta[Y] = theta[Y] > 360.0f ? theta[Y] - 360.0f : theta[Y];
-    theta[X] += 23.0 * elapsed_time;
-    theta[X] = theta[X] > 360.0f ? theta[X] - 360.0f : theta[X];
     if (wireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
@@ -393,8 +370,7 @@ void update_vertex_ubo_data(vert_ubo_data *v_data, object *obj, mat4 view, mat4 
     glNamedBufferSubData(vert_ubo, 0, sizeof(vert_ubo_data), v_data);
 }
 
-void draw()
-{   
+void draw() {   
     glFrontFace(GL_CCW);
 
     //UBO structs
@@ -440,15 +416,13 @@ void draw()
     object_render(skybox);
 }
 
-void postDraw()
-{
+void postDraw() {
     glViewport(0, 0, windowWidth, windowHeight);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBlitFramebuffer(0, 0, renderWidth, renderHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
-void mainLoop()
-{
+void mainLoop() {
     while (!quit)
     {
         handleInput();
@@ -466,8 +440,7 @@ void mainLoop()
     printf("Program exit! Terminating application\n");
 }
 
-void terminate()
-{
+void terminate() {
     object_free(cube);
     object_free(monkey);
     object_free(room);
@@ -477,8 +450,7 @@ void terminate()
     SDL_Quit();
 }
 
-int main()
-{
+int main() {
 
     init();
 
