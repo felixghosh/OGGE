@@ -397,27 +397,30 @@ void draw()
 {   
     glFrontFace(GL_CCW);
 
+    //UBO structs
+    frag_ubo_data f_data;
+    vert_ubo_data v_data;
+
     //----------Per frame fragment data----------
     light->pos.v[0] = sin(game_time) * 5.0;
     light->pos.v[1] = sin(game_time * 0.3) * 3.0;
     light->pos.v[2] = sin(game_time * 0.7) * 6.0;
 
-    frag_ubo_data f_data;
+    
     f_data.camera_pos = (vec3){{game_camera.x, game_camera.y, game_camera.z}};
     f_data.light_pos = light->pos;
 
     glNamedBufferSubData(frag_ubo, 0, sizeof(frag_ubo_data), &f_data);
 
-
-    //----------Per model vertex data----------
-    vert_ubo_data v_data;
+    //----------Per frame vertex data----------
     mat4 view, projection;
-
     view = camera_view_mat(&game_camera, *cube);
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     // projection = camera_frustum(-1.0, 1.0, -1.0, 1.0, 0.5, 3.0);
     projection = camera_perspective(2.5f, 16.0f / 9.0f, 0.01, 1000.0);
 
+
+    //----------Per model vertex data----------
     update_vertex_ubo_data(&v_data, cube, view, projection);
     object_render(cube);
 
@@ -430,7 +433,7 @@ void draw()
     update_vertex_ubo_data(&v_data, light, view, projection);
     object_render(light);
 
-    //Skybox manual handling. It is drawn from the inside, therefore the winding order of the triangles need to be reversed
+    //Skybox manual handling. It is drawn from the inside, therefore the winding order of the triangles needs to be reversed
     glFrontFace(GL_CW);
     glBindTextureUnit(SKYBOX_TEXTURE_UNIT, skybox_tex);
     update_vertex_ubo_data(&v_data, skybox, view, projection);
