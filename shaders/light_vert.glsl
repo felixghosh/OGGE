@@ -5,7 +5,11 @@ layout (location = 2) in vec3 vNormal;
 
 out vec4 color;
 
-uniform mat4 mvp;
+layout(std140, binding = 0) uniform vert_data {
+    mat4 model_mat;    //Unused
+    mat4 mvp;
+    int is_textured_u; //Unused
+};
 
 void main()
 {

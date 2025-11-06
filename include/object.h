@@ -16,12 +16,6 @@ typedef struct object {
     vec3 pos;
     float scale;
     vec3 orientation;
-    GLuint uniform_loc_time;
-    GLuint uniform_loc_model;
-    GLuint uniform_loc_mvp;
-    GLuint uniform_loc_light_pos;
-    GLuint uniform_loc_camera_pos;
-    GLuint uniform_loc_is_textured;
 } object;
 
 void    object_load_obj(object *obj, const char *obj_filepath, const char *tex_filepath, vec4 color, vec3 position, float scale);
@@ -31,8 +25,6 @@ object *object_create();
 void    object_free(object *obj);
 
 void    object_attach_shaders(object *obj, const char *vertex_shader_path, const char *fragment_shader_path);
-
-void    object_update_uniforms(object *obj, mat4 model, mat4 mvp, vec3 light_pos, vec3 camera_pos);
 
 void    object_render(object *obj);
 

@@ -125,14 +125,12 @@ void objectSpecification()
     light = object_create();
     object_attach_shaders(light, "shaders/light_vert.glsl", "shaders/light_frag.glsl");
     object_load_obj(light, "models/sphere.obj", NULL, (vec4){{1.0, 0.8, 0.6, 1.0}}, (vec3){{2.0, 5.0, -2.0}}, 0.5);
-    light->uniform_loc_mvp = glGetUniformLocation(light->shader_program, "mvp");
 
     //Cube-mapped skybox
     skybox = object_create();
     object_attach_shaders(skybox, "shaders/skybox_vert.glsl", "shaders/skybox_frag.glsl");
 
     object_load_obj(skybox, "models/cube.obj", NULL, (vec4){{0.0, 0.0, 0.0, 0.0}}, (vec3){{0.0, 0.0, 0.0}}, 100);
-    skybox->uniform_loc_mvp = glGetUniformLocation(skybox->shader_program, "mvp");
     glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &skybox_tex);
     glTextureStorage2D(skybox_tex, 1, GL_RGBA8, 2048, 2048);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex);
@@ -156,9 +154,9 @@ void objectSpecification()
             0,                // mip level
             0, 0, i,          // x, y, z offset (z = face index)
             width, height, 1, // size (depth = 1)
-            format,          // format of source data
+            format,           // format of source data
             GL_UNSIGNED_BYTE, // type of source data
-            data      // pointer to pixel data
+            data              // pointer to pixel data
         );
         stbi_image_free(data);
     }
@@ -413,7 +411,7 @@ void draw()
 
     //----------Per model vertex data----------
     vert_ubo_data v_data;
-    mat4 model, view, projection, mvp;
+    mat4 view, projection;
 
     view = camera_view_mat(&game_camera, *cube);
     // projection = camera_ortho(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
@@ -429,23 +427,14 @@ void draw()
     update_vertex_ubo_data(&v_data, room, view, projection);
     object_render(room);
 
-    // model = object_model_mat(light);
-    // mvp = mat4_mul3(projection, view, model);
-    // object_use(light);
-    // glUniformMatrix4fv(light->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
-    // glUniform3fv(light->uniform_loc_light_pos, 1, (const float *)light->pos.v);
-    // glUniform3f(light->uniform_loc_camera_pos, game_camera.x, game_camera.y, game_camera.z);
-    // object_render(light);
+    update_vertex_ubo_data(&v_data, light, view, projection);
+    object_render(light);
 
-    // //Skybox manual handling
-    model = object_model_mat(skybox);
-    mvp = mat4_mul3(projection, view, model);
-    object_use(skybox);
-    glUniformMatrix4fv(skybox->uniform_loc_mvp, 1, GL_TRUE, (const float *)mvp.m);
-    glBindTextureUnit(SKYBOX_TEXTURE_UNIT, skybox_tex);
-    //Skybox is drawn from the inside, therefore the winding order of the triangles need to be reversed
+    //Skybox manual handling. It is drawn from the inside, therefore the winding order of the triangles need to be reversed
     glFrontFace(GL_CW);
-    // object_render(skybox);
+    glBindTextureUnit(SKYBOX_TEXTURE_UNIT, skybox_tex);
+    update_vertex_ubo_data(&v_data, skybox, view, projection);
+    object_render(skybox);
 }
 
 void postDraw()
